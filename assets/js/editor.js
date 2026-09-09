@@ -49,6 +49,7 @@ function initEditor() {
   const redoBtn = $('redoBtn');
   const baToggle = $('baToggle');
   const exportBtn = $('exportBtn');
+  const exportJpgBtn = $('exportJpgBtn');
   const resetBtn = $('resetBtn');
   const headFileInput = $('headFileInput');
   if (!canvas || !stage) return;
@@ -546,38 +547,73 @@ function initEditor() {
   }
 
   /* ---------------- export ---------------- */
+  function renderToOffscreen() {
+    if (!baseSource) { console.warn('[editor] export: no photo loaded'); return null; }
+    const off = document.createElement('canvas');
+    off.width = baseW;   // FULL source resolution; never upscaled beyond source
+    off.height = baseH;
+    console.assert(off.width <= baseW && off.height <= baseH,
+      '[editor] export must not exceed source resolution');
+    const c = off.getContext('2d');
+    c.setLineDash([]);
+    c.drawImage(baseSource, 0, 0);
+    for (const L of layers) drawLayer(c, L, off.width, off.height, 0);
+    return off;
+  }
+  function triggerDownload(blob, fallbackHref, fallbackName) {
+    const a = document.createElement('a');
+    if (blob && typeof URL !== 'undefined' && URL.createObjectURL) {
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = fallbackName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch { /* noop */ } }, 2000);
+      return;
+    }
+    a.href = fallbackHref;
+    a.download = fallbackName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
       if (!baseSource) { console.warn('[editor] export: no photo loaded'); return; }
-      const off = document.createElement('canvas');
-      off.width = baseW;   // FULL source resolution; never upscaled beyond source
-      off.height = baseH;
-      console.assert(off.width <= baseW && off.height <= baseH,
-        '[editor] export must not exceed source resolution');
-      const c = off.getContext('2d');
-      c.setLineDash([]);
-      c.drawImage(baseSource, 0, 0);
-      for (const L of layers) drawLayer(c, L, off.width, off.height, 0);
-      const download = (href) => {
-        const a = document.createElement('a');
-        a.href = href;
-        a.download = 'sparkler-exit-lab.png';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      };
+      const off = renderToOffscreen();
+      if (!off) return;
       if (typeof off.toBlob === 'function') {
         off.toBlob((blob) => {
-          if (blob && typeof URL !== 'undefined' && URL.createObjectURL) {
-            const url = URL.createObjectURL(blob);
-            download(url);
-            setTimeout(() => { try { URL.revokeObjectURL(url); } catch { /* noop */ } }, 2000);
+          if (blob) {
+            triggerDownload(blob, null, 'sparkler-exit-lab.png');
           } else {
-            download(off.toDataURL('image/png'));
+            triggerDownload(null, off.toDataURL('image/png'), 'sparkler-exit-lab.png');
           }
         }, 'image/png');
       } else {
-        download(off.toDataURL('image/png'));
+        triggerDownload(null, off.toDataURL('image/png'), 'sparkler-exit-lab.png');
+      }
+    });
+  }
+  // JPEG export: quality 1.0 = maximum quality the JPEG format allows
+  // (no chroma subsampling where the browser honors it, full-length quantization tables).
+  // PNG stays the lossless option; JPEG keeps photos small with no visible loss at q1.0.
+  if (exportJpgBtn) {
+    exportJpgBtn.addEventListener('click', () => {
+      if (!baseSource) { console.warn('[editor] export: no photo loaded'); return; }
+      const off = renderToOffscreen();
+      if (!off) return;
+      if (typeof off.toBlob === 'function') {
+        off.toBlob((blob) => {
+          if (blob) {
+            triggerDownload(blob, null, 'sparkler-exit-lab.jpg');
+          } else {
+            triggerDownload(null, off.toDataURL('image/jpeg', 1.0), 'sparkler-exit-lab.jpg');
+          }
+        }, 'image/jpeg', 1.0);
+      } else {
+        triggerDownload(null, off.toDataURL('image/jpeg', 1.0), 'sparkler-exit-lab.jpg');
       }
     });
   }
