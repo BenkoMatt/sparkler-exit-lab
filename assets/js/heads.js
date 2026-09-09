@@ -1,13 +1,19 @@
-/* heads.js v1.0 — Sparkler Exit Lab procedural head generator + thumbnail painter.
- * Plain ES2020 module, no deps. Every head: warm gold strokes + embers, additive
+/* heads.js v2.0 — Sparkler Exit Lab procedural head generator + thumbnail painter.
+ * Plain ES2020 module, no deps. Six REALISM variants of the classic pyrotechnic
+ * burst (classic / crackle / trail / dense / gravity / fan) share one burst engine
+ * (drawBurstBase) whose profile tunes: arm count, length distribution, per-segment
+ * wander, branching probability + generation depth (primary -> branch -> sub-branch,
+ * like iron/steel particles splitting as they oxidize), ember density along arms vs
+ * at tips, gravity droop (t^2), wind drift, alpha fade along length, ember twinkle
+ * rate, and core size/brightness. Every head: white-hot inner strokes
+ * (rgba(255,240,200)) + tinted outer glow, embers cooling gold -> dim orange, additive
  * ('lighter') layering for brightness, soft radial glow behind, scale-invariant via `size`.
  * Exports: drawHead, init, paintThumb, startFlicker, stopFlicker, HEAD_KINDS.
  */
 
 const DEFAULT_TINT = '#ffb347';
-const FONT_STACK = "'Brush Script MT','Segoe Script','Snell Roundhand','Lucida Handwriting',cursive";
 
-export const HEAD_KINDS = ['classic', 'heart', 'star', 'initials', 'flame', 'orb', 'upload'];
+export const HEAD_KINDS = ['classic', 'crackle', 'trail', 'dense', 'gravity', 'fan', 'upload'];
 
 /* ---------- utils ---------- */
 
@@ -146,188 +152,274 @@ function scatterEmbers(ctx, cx, cy, size, tint, phase, count, spread, seedSalt) 
   }
 }
 
-/* ---------- head painters ---------- */
+/* ---------- realistic-burst engine ---------- */
 
-function drawClassic(ctx, x, y, size, tint, phase, flick) {
+const HOT_INNER = { r: 255, g: 240, b: 200 };
+const COOL_TIP = { r: 255, g: 140, b: 60 }; // embers cool: white-hot -> gold -> dim orange-red
+
+/* Point at parameter t (0..1) along a polyline, plus local direction. */
+function limbPoint(pts, t) {
+  const segs = pts.length - 1;
+  const f = clamp01(t) * segs;
+  const i = Math.min(segs - 1, Math.floor(f));
+  const u = f - i;
+  return {
+    x: pts[i].x + (pts[i + 1].x - pts[i].x) * u,
+    y: pts[i].y + (pts[i + 1].y - pts[i].y) * u,
+    a: Math.atan2(pts[i + 1].y - pts[i].y, pts[i + 1].x - pts[i].x),
+  };
+}
+
+/* Remap a 0..1 sample toward the edges (k < 1 pushes outward) — fan cone. */
+function edgePush(u, k) {
+  const h = Math.abs(u - 0.5) * 2;
+  return u < 0.5 ? 0.5 - Math.pow(h, k) / 2 : 0.5 + Math.pow(h, k) / 2;
+}
+
+/**
+ * One realistic sparkler burst. profile keys:
+ *  salt        seed string (per-kind)
+ *  nArms [a,b] primary arm count range
+ *  len [a,b]   arm length as fraction of size
+ *  segs        polyline segments per arm
+ *  wander      max per-segment direction change (radians)
+ *  angleJitter fan-out jitter (full-circle modes)
+ *  cone        if set: sweep arms into a cone of this width (fan)
+ *  coneEdgeArm edge-bias exponent for arm angles within the cone
+ *  lowerBias   if true: weight angles to the lower hemisphere (gravity)
+ *  branchProb / maxGen / branchDecay / branchLen / branchTwin / maxBranches
+ *  armW [a,b]  stroke width fraction of size
+ *  flickAmp / flickRate   per-arm brightness variance / phase reseed rate
+ *  tipFade / fadeCurve    alpha falloff along length (1 - tipFade*t^curve)
+ *  coolTips   lerp inner stroke white-hot -> dim orange along length (gravity)
+ *  droop      gravity: y += droop*size*t^2 along arm param
+ *  wind       global x drift: x += wind*size*t along arm param
+ *  alongEmbers  embers per primary arm, spawned along the limb
+ *  tipBiasEmber  constrain along-limb embers to the outer 45% (cone edge)
+ *  tipEmberProb / tipR / tipAlpha  hot ember at each primary arm tip
+ *  emberR [a,b] / emberAlpha / twinkle [a,b]  ember size/alpha/twinkle rate
+ *  emberFall  gravity: embers drawn below the arm line (falling)
+ *  coreScale / coreBright  hot core size & brightness multipliers
+ */
+function drawBurstBase(ctx, x, y, size, tint, phase, flick, prof) {
   const p = Number(phase) || 0;
-  const rnd = mulberry32((hashStr('classic') ^ Math.imul(Math.floor(p * 9) + 1, 2654435761)) >>> 0);
-  const n = 14 + Math.floor(rnd() * 7); // 14–20 strokes
+  const rnd = mulberry32((hashStr(prof.salt) ^ Math.imul(Math.floor(p * prof.flickRate) + 1, 2654435761)) >>> 0);
+  const n = prof.nArms[0] + Math.floor(rnd() * (prof.nArms[1] - prof.nArms[0] + 1));
+  const coneC = prof.cone ? (rnd() - 0.5) * 0.5 : 0; // seeded rightward rotation for fan
+  const limbs = [];
+  let branchCount = 0;
+
+  /* Grow one limb polyline; recursively spawn branches (gen 2/3). */
+  const genLimb = (px, py, ang, len, gen, segs) => {
+    const pts = [{ x: px, y: py }];
+    let sx = px, sy = py, ca = ang;
+    for (let s = 0; s < segs; s++) {
+      const t = (s + 1) / segs;
+      ca += (rnd() - 0.5) * prof.wander;
+      sx += Math.cos(ca) * (len / segs);
+      sy += Math.sin(ca) * (len / segs);
+      pts.push({
+        x: sx + (prof.wind ? prof.wind * size * t : 0),
+        y: sy + (prof.droop ? prof.droop * size * t * t : 0),
+      });
+    }
+    limbs.push({ pts, gen, len });
+    if (gen < prof.maxGen) {
+      const tries = 1 + (prof.branchTwin && rnd() < prof.branchTwin ? 1 : 0);
+      for (let k = 0; k < tries; k++) {
+        if (rnd() < prof.branchProb * (gen === 0 ? 1 : (prof.branchDecay || 0.75)) && branchCount < prof.maxBranches) {
+          branchCount++;
+          const t0 = 0.3 + rnd() * 0.55;
+          const p0 = limbPoint(pts, t0);
+          const side = rnd() < 0.5 ? -1 : 1;
+          const bAng = p0.a + side * (0.35 + rnd() * 0.8) + (prof.droop ? 0.15 : 0);
+          const bLen = len * (prof.branchLen[0] + rnd() * (prof.branchLen[1] - prof.branchLen[0])) * (gen === 0 ? 1 : 0.65);
+          genLimb(p0.x, p0.y, bAng, bLen, gen + 1, 2);
+        }
+      }
+    }
+  };
+
+  for (let i = 0; i < n; i++) {
+    let a;
+    if (prof.cone) {
+      a = coneC + edgePush((i + rnd()) / n, prof.coneEdgeArm) * prof.cone - prof.cone / 2;
+    } else if (prof.lowerBias) {
+      a = -Math.PI * 0.32 + rnd() * Math.PI * 1.72 + (rnd() - 0.5) * 0.3;
+    } else {
+      a = (i / n) * Math.PI * 2 + (rnd() - 0.5) * prof.angleJitter;
+    }
+    const len = size * (prof.len[0] + rnd() * (prof.len[1] - prof.len[0]));
+    genLimb(x, y, a, len, 0, prof.segs);
+  }
+
+  /* Render: wide tinted pass + thin hot pass, alpha fading along length. */
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.lineCap = 'round';
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + (rnd() - 0.5) * 0.9;
-    const len = size * (0.22 + rnd() * 0.5);
-    const bend = (rnd() - 0.5) * size * 0.18;
-    const x2 = x + Math.cos(a) * len + Math.cos(a + Math.PI / 2) * bend;
-    const y2 = y + Math.sin(a) * len + Math.sin(a + Math.PI / 2) * bend;
-    const mx = (x + x2) / 2 + Math.cos(a + Math.PI / 2) * bend * 0.6;
-    const my = (y + y2) / 2 + Math.sin(a + Math.PI / 2) * bend * 0.6;
-    const w = Math.max(0.7, size * (0.008 + rnd() * 0.016));
-    const bright = 0.55 + rnd() * 0.45;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(mx, my, x2, y2);
-    ctx.strokeStyle = rgba(tint, 0.3 * bright * flick);
-    ctx.lineWidth = w * 2.2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(mx, my, x2, y2);
-    ctx.strokeStyle = `rgba(255,240,200,${(0.75 * bright * flick).toFixed(3)})`;
-    ctx.lineWidth = w;
-    ctx.stroke();
-    drawEmber(ctx, x2, y2, size * (0.008 + rnd() * 0.012), tint, 0.6 + 0.35 * rnd());
-  }
-  ctx.restore();
-  drawCore(ctx, x, y, size, tint, flick);
-}
-
-function heartPoint(t) {
-  return {
-    x: 16 * Math.pow(Math.sin(t), 3),
-    y: 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t),
-  };
-}
-
-function drawHeart(ctx, x, y, size, tint, phase, flick) {
-  const scale = size / 34;
-  const oy = y - 2.5 * scale * -1; // shift so heart is vertically centered (math y-up)
-  const pathFn = () => {
-    ctx.beginPath();
-    for (let i = 0; i <= 96; i++) {
-      const t = (i / 96) * Math.PI * 2;
-      const pt = heartPoint(t);
-      const px = x + pt.x * scale;
-      const py = oy - pt.y * scale; // flip y for canvas
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+  ctx.lineJoin = 'round';
+  const tips = [];
+  for (const limb of limbs) {
+    const genScale = limb.gen === 0 ? 1 : limb.gen === 1 ? 0.85 : 0.68;
+    const w = Math.max(0.7, size * (prof.armW[0] + rnd() * (prof.armW[1] - prof.armW[0])));
+    const bright = (0.55 + rnd() * prof.flickAmp) * genScale;
+    const segs = limb.pts.length - 1;
+    for (let s = 0; s < segs; s++) {
+      const t = (s + 1) / segs;
+      const alphaMul = (1 - prof.tipFade * Math.pow(t, prof.fadeCurve)) * bright * flick;
+      if (alphaMul <= 0.01) continue;
+      const a0 = limb.pts[s], a1 = limb.pts[s + 1];
+      const wt = Math.max(0.5, w * (1 - 0.3 * t));
+      ctx.beginPath();
+      ctx.moveTo(a0.x, a0.y);
+      ctx.lineTo(a1.x, a1.y);
+      ctx.strokeStyle = rgba(tint, 0.3 * alphaMul);
+      ctx.lineWidth = wt * 2.2;
+      ctx.stroke();
+      const innerC = prof.coolTips ? {
+        r: Math.round(HOT_INNER.r + (COOL_TIP.r - HOT_INNER.r) * Math.pow(t, 1.2)),
+        g: Math.round(HOT_INNER.g + (COOL_TIP.g - HOT_INNER.g) * Math.pow(t, 1.2)),
+        b: Math.round(HOT_INNER.b + (COOL_TIP.b - HOT_INNER.b) * Math.pow(t, 1.2)),
+      } : HOT_INNER;
+      ctx.beginPath();
+      ctx.moveTo(a0.x, a0.y);
+      ctx.lineTo(a1.x, a1.y);
+      ctx.strokeStyle = rgba(innerC, (prof.coolTips ? 0.7 : 0.75) * alphaMul);
+      ctx.lineWidth = wt;
+      ctx.stroke();
     }
-    ctx.closePath();
-  };
-  strokeTwice(ctx, pathFn, size, tint, flick);
-  scatterEmbers(ctx, x, y, size, tint, phase, 26, size * 0.46, 'heart');
-  drawCore(ctx, x, y - 2 * scale, size, tint, flick);
-}
+    if (limb.gen === 0) tips.push(limb.pts[limb.pts.length - 1]);
+  }
 
-function drawStar(ctx, x, y, size, tint, phase, flick) {
-  const rOut = size * 0.36;
-  const rIn = size * 0.15;
-  const pathFn = () => {
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const a = -Math.PI / 2 + (i * Math.PI) / 5;
-      const r = i % 2 === 0 ? rOut : rIn;
-      const px = x + Math.cos(a) * r;
-      const py = y + Math.sin(a) * r;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+  /* Embers along limbs (spawned where the arm burns) + hot tips. */
+  const alongTotal = Math.round(n * prof.alongEmbers);
+  for (let i = 0; i < alongTotal; i++) {
+    const limb = limbs[Math.floor(rnd() * limbs.length)];
+    let t = rnd();
+    if (prof.tipBiasEmber) t = 0.55 + t * 0.45; // fan: concentrate at cone edge
+    const pt = limbPoint(limb.pts, t);
+    const ex = pt.x + (rnd() - 0.5) * size * 0.02;
+    let ey = pt.y + (rnd() - 0.5) * size * 0.015;
+    if (prof.emberFall) ey += prof.emberFall * size * (0.3 + rnd() * 0.7) * (0.4 + t);
+    const tw = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(p * (prof.twinkle[0] + rnd() * (prof.twinkle[1] - prof.twinkle[0])) + rnd() * 6.28));
+    drawEmber(ctx, ex, ey, size * (prof.emberR[0] + rnd() * (prof.emberR[1] - prof.emberR[0])), tint, prof.emberAlpha * tw);
+  }
+  for (const tip of tips) {
+    if (rnd() < prof.tipEmberProb) {
+      const tw = 0.6 + 0.4 * (0.5 + 0.5 * Math.sin(p * (prof.twinkle[0] + rnd() * 2) + rnd() * 6.28));
+      drawEmber(ctx, tip.x, tip.y, size * (prof.tipR[0] + rnd() * (prof.tipR[1] - prof.tipR[0])), tint, prof.tipAlpha * tw);
     }
-    ctx.closePath();
-  };
-  strokeTwice(ctx, pathFn, size, tint, flick);
-  scatterEmbers(ctx, x, y, size, tint, phase, 24, size * 0.46, 'star');
-  drawCore(ctx, x, y, size, tint, flick);
-}
-
-function drawInitials(ctx, x, y, size, tint, phase, flick, opts) {
-  const raw = opts.text == null ? '' : String(opts.text);
-  const text = (raw.trim() || 'J+M').slice(0, 6) || 'US';
-  let fs = Math.round(size * 0.48);
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `300 ${fs}px ${FONT_STACK}`;
-  const maxW = size * 0.9;
-  let w = ctx.measureText(text).width;
-  if (w > maxW && w > 0) {
-    fs = Math.max(4, Math.round(fs * (maxW / w)));
-    ctx.font = `300 ${fs}px ${FONT_STACK}`;
-  }
-  ctx.globalCompositeOperation = 'lighter';
-  /* pass 1: wide soft glow */ {
-    ctx.shadowColor = rgba(tint, 0.9);
-    ctx.shadowBlur = size * 0.16;
-    ctx.fillStyle = rgba(tint, 0.55 * flick);
-    ctx.fillText(text, x, y);
-  }
-  /* pass 2: tight hot glow */ {
-    ctx.shadowColor = 'rgba(255,240,200,0.95)';
-    ctx.shadowBlur = size * 0.05;
-    ctx.fillStyle = `rgba(255,246,220,${(0.9 * flick).toFixed(3)})`;
-    ctx.fillText(text, x, y);
-  }
-  ctx.shadowBlur = 0;
-  /* thin crackle stroke over the glyphs */
-  ctx.strokeStyle = `rgba(255,235,180,${(0.4 * flick).toFixed(3)})`;
-  ctx.lineWidth = Math.max(0.6, size * 0.006);
-  ctx.strokeText(text, x, y);
-  ctx.restore();
-  scatterEmbers(ctx, x, y, size, tint, phase, 22, size * 0.48, 'initials');
-  drawEmber(ctx, x, y, size * 0.02, tint, 0.8 * flick);
-}
-
-function flamePathFn(ctx, x, y, size) {
-  return () => {
-    ctx.beginPath();
-    ctx.moveTo(x, y - size * 0.5);
-    ctx.bezierCurveTo(x + size * 0.3, y - size * 0.12, x + size * 0.3, y + size * 0.24, x, y + size * 0.42);
-    ctx.bezierCurveTo(x - size * 0.3, y + size * 0.24, x - size * 0.3, y - size * 0.12, x, y - size * 0.5);
-    ctx.closePath();
-  };
-}
-
-function drawFlame(ctx, x, y, size, tint, phase, flick) {
-  strokeTwice(ctx, flamePathFn(ctx, x, y, size), size, tint, flick);
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  /* inner bright core teardrop */
-  const inner = () => {
-    ctx.beginPath();
-    ctx.moveTo(x, y - size * 0.26);
-    ctx.bezierCurveTo(x + size * 0.15, y - size * 0.05, x + size * 0.15, y + size * 0.14, x, y + size * 0.26);
-    ctx.bezierCurveTo(x - size * 0.15, y + size * 0.14, x - size * 0.15, y - size * 0.05, x, y - size * 0.26);
-    ctx.closePath();
-  };
-  inner();
-  ctx.fillStyle = `rgba(255,250,232,${(0.85 * flick).toFixed(3)})`;
-  ctx.fill();
-  inner();
-  ctx.fillStyle = rgba(tint, 0.5 * flick);
-  ctx.fill();
-  ctx.restore();
-  /* rising embers */
-  const p = Number(phase) || 0;
-  const rnd = mulberry32((hashStr('flame') ^ Math.imul(Math.floor(p * 7) + 1, 2654435761)) >>> 0);
-  const n = 5 + Math.floor(rnd() * 4);
-  for (let i = 0; i < n; i++) {
-    const ex = x + (rnd() - 0.5) * size * 0.42;
-    const ey = y - size * (0.55 + rnd() * 0.5);
-    drawEmber(ctx, ex, ey, size * (0.006 + rnd() * 0.01), tint, 0.35 + 0.5 * rnd());
-  }
-  drawCore(ctx, x + size * 0.02, y + size * 0.02, size * 0.9, tint, flick);
-}
-
-function drawOrb(ctx, x, y, size, tint, phase, flick) {
-  const p = Number(phase) || 0;
-  const rnd = mulberry32(hashStr('orb')); // fixed positions; alpha twinkles
-  const n = 220;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  const R = size * 0.34;
-  for (let i = 0; i < n; i++) {
-    const a = rnd() * Math.PI * 2;
-    const rr = R * Math.pow(rnd(), 1.5); // radial density falloff (denser center)
-    const ex = x + Math.cos(a) * rr;
-    const ey = y + Math.sin(a) * rr;
-    const speed = 1.2 + rnd() * 3.2;
-    const off = rnd() * Math.PI * 2;
-    const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(p * speed + off));
-    const bright = 0.3 + rnd() * 0.7;
-    drawEmber(ctx, ex, ey, size * (0.005 + rnd() * 0.011), tint, Math.min(1, 0.55 * tw * bright * flick));
   }
   ctx.restore();
-  drawCore(ctx, x, y, size, tint, flick);
+  drawCore(ctx, x, y, size * (prof.coreScale || 1), tint, flick * (prof.coreBright || 1));
+}
+
+/* ---------- head painters (6 realism variants) ---------- */
+
+/* (1) classic — balanced burst: 14–20 arms, light gen-2 branching (~30%). */
+const PROFILE_CLASSIC = {
+  salt: 'burst-classic', nArms: [14, 20], len: [0.22, 0.66], segs: 3, wander: 0.55,
+  angleJitter: 0.9,
+  branchProb: 0.3, maxGen: 1, branchLen: [0.3, 0.55], branchTwin: 0, maxBranches: 14,
+  armW: [0.008, 0.016], flickAmp: 0.45, flickRate: 9,
+  tipFade: 0.25, fadeCurve: 1.2,
+  alongEmbers: 0.55, tipEmberProb: 1, tipR: [0.008, 0.02], tipAlpha: 0.7,
+  emberR: [0.006, 0.016], emberAlpha: 0.5, twinkle: [1.5, 4.5],
+  droop: 0, wind: 0, emberFall: 0, coolTips: false,
+  coreScale: 1, coreBright: 1,
+};
+
+/* (2) crackle — iron-file crackle: many short arms, aggressive gen-2+gen-3
+ * branching, dense tiny embers along full arm length, tight flicker. */
+const PROFILE_CRACKLE = {
+  salt: 'burst-crackle', nArms: [18, 24], len: [0.13, 0.34], segs: 2, wander: 0.75,
+  angleJitter: 1.2,
+  branchProb: 0.72, maxGen: 2, branchDecay: 0.75, branchLen: [0.28, 0.6], branchTwin: 0.35, maxBranches: 60,
+  armW: [0.005, 0.011], flickAmp: 0.45, flickRate: 22,
+  tipFade: 0.45, fadeCurve: 1.3,
+  alongEmbers: 2.6, tipEmberProb: 0.5, tipR: [0.004, 0.009], tipAlpha: 0.55,
+  emberR: [0.003, 0.007], emberAlpha: 0.55, twinkle: [3, 7],
+  coreScale: 0.95, coreBright: 1,
+};
+
+/* (3) trail — long fading streaks: few long arms, strong alpha falloff so tips
+ * dim into the dark, sparse large slow embers. */
+const PROFILE_TRAIL = {
+  salt: 'burst-trail', nArms: [8, 12], len: [0.42, 0.7], segs: 5, wander: 0.34,
+  angleJitter: 0.9,
+  branchProb: 0.12, maxGen: 1, branchLen: [0.2, 0.35], branchTwin: 0, maxBranches: 6,
+  armW: [0.006, 0.013], flickAmp: 0.35, flickRate: 7,
+  tipFade: 0.96, fadeCurve: 1.7,
+  alongEmbers: 0.3, tipEmberProb: 0.3, tipR: [0.01, 0.02], tipAlpha: 0.35,
+  emberR: [0.012, 0.022], emberAlpha: 0.4, twinkle: [0.7, 1.8],
+  coreScale: 0.9, coreBright: 1,
+};
+
+/* (4) dense — fresh-lit knot: small spray radius, very high arm count, hot
+ * white-gold core larger than default, short arms, dense close-in embers. */
+const PROFILE_DENSE = {
+  salt: 'burst-dense', nArms: [26, 34], len: [0.09, 0.2], segs: 2, wander: 0.9,
+  angleJitter: 1.4,
+  branchProb: 0.3, maxGen: 1, branchLen: [0.25, 0.5], branchTwin: 0, maxBranches: 20,
+  armW: [0.006, 0.012], flickAmp: 0.45, flickRate: 14,
+  tipFade: 0.3, fadeCurve: 1.2,
+  alongEmbers: 1.6, tipEmberProb: 0.85, tipR: [0.005, 0.012], tipAlpha: 0.7,
+  emberR: [0.004, 0.01], emberAlpha: 0.6, twinkle: [2.5, 6],
+  coreScale: 1.3, coreBright: 1,
+};
+
+/* (5) gravity — drooping burst: arms biased to the lower hemisphere, tips droop
+ * with t^2 curvature, embers fall (drawn below the arm line), cooling tips,
+ * asymmetric glow (extra backdrop pulled downward). */
+const PROFILE_GRAVITY = {
+  salt: 'burst-gravity', nArms: [12, 17], len: [0.22, 0.55], segs: 4, wander: 0.5,
+  angleJitter: 0.9, lowerBias: true,
+  branchProb: 0.25, maxGen: 1, branchLen: [0.25, 0.5], branchTwin: 0, maxBranches: 14,
+  armW: [0.007, 0.014], flickAmp: 0.45, flickRate: 10,
+  tipFade: 0.8, fadeCurve: 1.5, coolTips: true,
+  droop: 0.26,
+  alongEmbers: 0.8, tipEmberProb: 0.7, tipR: [0.007, 0.016], tipAlpha: 0.5,
+  emberR: [0.006, 0.013], emberAlpha: 0.5, twinkle: [1.5, 4], emberFall: 0.05,
+  coreScale: 1, coreBright: 0.95,
+};
+
+/* (6) fan — wind-blown fan: all arms swept into a ~120° rightward cone (seeded
+ * rotation), arms wander, embers concentrated at the cone edge. */
+const PROFILE_FAN = {
+  salt: 'burst-fan', nArms: [12, 16], len: [0.28, 0.6], segs: 4, wander: 0.6,
+  cone: Math.PI * (2 / 3), coneEdgeArm: 0.85, tipBiasEmber: true,
+  branchProb: 0.18, maxGen: 1, branchLen: [0.2, 0.4], branchTwin: 0, maxBranches: 10,
+  armW: [0.007, 0.014], flickAmp: 0.45, flickRate: 11,
+  tipFade: 0.55, fadeCurve: 1.4,
+  alongEmbers: 1.1, tipEmberProb: 0.8, tipR: [0.007, 0.015], tipAlpha: 0.6,
+  emberR: [0.005, 0.012], emberAlpha: 0.5, twinkle: [2, 5],
+  wind: 0.05,
+  coreScale: 1, coreBright: 1,
+};
+
+function drawClassic(ctx, x, y, size, tint, phase, flick) {
+  drawBurstBase(ctx, x, y, size, tint, phase, flick, PROFILE_CLASSIC);
+}
+
+function drawCrackle(ctx, x, y, size, tint, phase, flick) {
+  drawBurstBase(ctx, x, y, size, tint, phase, flick, PROFILE_CRACKLE);
+}
+
+function drawTrail(ctx, x, y, size, tint, phase, flick) {
+  drawBurstBase(ctx, x, y, size, tint, phase, flick, PROFILE_TRAIL);
+}
+
+function drawDense(ctx, x, y, size, tint, phase, flick) {
+  drawBurstBase(ctx, x, y, size, tint, phase, flick, PROFILE_DENSE);
+}
+
+function drawGravity(ctx, x, y, size, tint, phase, flick) {
+  drawGlowBackdrop(ctx, x, y + size * 0.16, size * 0.85, tint, 0.5, flick); // asymmetric glow
+  drawBurstBase(ctx, x, y, size, tint, phase, flick, PROFILE_GRAVITY);
+}
+
+function drawFan(ctx, x, y, size, tint, phase, flick) {
+  drawBurstBase(ctx, x, y, size, tint, phase, flick, PROFILE_FAN);
 }
 
 function drawUpload(ctx, x, y, size, tint, phase, flick, opts) {
@@ -359,11 +451,11 @@ function drawUpload(ctx, x, y, size, tint, phase, flick, opts) {
 /**
  * Draw a procedural sparkler head.
  * @param {CanvasRenderingContext2D} ctx
- * @param {'classic'|'heart'|'star'|'initials'|'flame'|'orb'|'upload'} kind
+ * @param {'classic'|'crackle'|'trail'|'dense'|'gravity'|'fan'|'upload'} kind
  * @param {number} x center x
  * @param {number} y center y
  * @param {number} size nominal diameter (scale-invariant drawing)
- * @param {object} [opts] {tint, glow 0..1, opacity 0..1, flickerPhase, text, image}
+ * @param {object} [opts] {tint, glow 0..1, opacity 0..1, flickerPhase, image}
  */
 export function drawHead(ctx, kind, x, y, size, opts = {}) {
   if (!ctx || typeof ctx.beginPath !== 'function') return;
@@ -377,11 +469,11 @@ export function drawHead(ctx, kind, x, y, size, opts = {}) {
   ctx.globalAlpha = opacity;
   drawGlowBackdrop(ctx, x, y, s, tint, glow, flick);
   switch (kind) {
-    case 'heart': drawHeart(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
-    case 'star': drawStar(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
-    case 'initials': drawInitials(ctx, x, y, s, tint, opts.flickerPhase, flick, opts); break;
-    case 'flame': drawFlame(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
-    case 'orb': drawOrb(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
+    case 'crackle': drawCrackle(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
+    case 'trail': drawTrail(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
+    case 'dense': drawDense(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
+    case 'gravity': drawGravity(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
+    case 'fan': drawFan(ctx, x, y, s, tint, opts.flickerPhase, flick); break;
     case 'upload': drawUpload(ctx, x, y, s, tint, opts.flickerPhase, flick, opts); break;
     case 'classic':
     default: drawClassic(ctx, x, y, s, tint, opts.flickerPhase, flick); break;

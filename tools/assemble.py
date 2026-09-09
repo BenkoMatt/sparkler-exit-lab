@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assembler: build site/index.html from section fragments (P1). Idempotent."""
 import re, os
-ROOT = "/root/sparkler-lab/site"
+ROOT = "/root/sparkler-lab"
 ORDER = ["s1-hero", "s2-explain", "s3-lab", "s4-heads", "s5-editor", "s6-gallery", "s7-method"]
 parts = []
 for name in ORDER:
