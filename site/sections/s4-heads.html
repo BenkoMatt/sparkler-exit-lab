@@ -1,0 +1,116 @@
+<!-- s4-heads v1.0-DRAFT - pending adversarial review -->
+<style>
+  #s3heads {
+    padding: 56px 20px;
+    background: var(--bg, #0b0d12);
+    color: var(--text, #e8e6df);
+  }
+  #s3heads .headWrap {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  #s3heads h2 {
+    margin: 0 0 8px;
+    font-size: 1.7rem;
+    color: var(--text, #e8e6df);
+  }
+  #s3heads .headIntro {
+    margin: 0 0 24px;
+    max-width: 62ch;
+    color: var(--muted, #9aa0ae);
+  }
+  #s3heads .headGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+  }
+  #s3heads .headCard {
+    margin: 0;
+    padding: 12px;
+    background: var(--panel, #141824);
+    border: 1px solid var(--border, #232936);
+    border-radius: 10px;
+    text-align: center;
+  }
+  #s3heads .thumb {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto 10px;
+    border-radius: 10px;
+    background: var(--bg, #0b0d12);
+  }
+  #s3heads .headName {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    color: var(--accent, #ffb347);
+  }
+  #s3heads .headDesc {
+    display: block;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: var(--muted, #9aa0ae);
+  }
+  #s3heads .headNote,
+  #s3heads .headProcedural {
+    margin: 18px 0 0;
+    font-size: 0.9rem;
+    color: var(--muted, #9aa0ae);
+  }
+  #s3heads .headProcedural {
+    margin-top: 6px;
+  }
+</style>
+<section id="s3heads">
+  <div class="headWrap">
+    <h2>The Head Library</h2>
+    <p class="headIntro">Six procedurally drawn sparkler heads - glowing wire sculptures that composite onto the wands in your photo. Pick one, then click a wand tip in the editor.</p>
+    <div class="headGrid">
+      <figure class="headCard">
+        <canvas class="thumb" data-head="classic" width="160" height="160" aria-label="Classic Burst sparkler head preview"></canvas>
+        <figcaption>
+          <span class="headName">Classic Burst</span>
+          <span class="headDesc">the traditional chaotic spray</span>
+        </figcaption>
+      </figure>
+      <figure class="headCard">
+        <canvas class="thumb" data-head="heart" width="160" height="160" aria-label="Heart sparkler head preview"></canvas>
+        <figcaption>
+          <span class="headName">Heart</span>
+          <span class="headDesc">sparks tracing a valentine outline</span>
+        </figcaption>
+      </figure>
+      <figure class="headCard">
+        <canvas class="thumb" data-head="star" width="160" height="160" aria-label="Star sparkler head preview"></canvas>
+        <figcaption>
+          <span class="headName">Star</span>
+          <span class="headDesc">five crackling points of light</span>
+        </figcaption>
+      </figure>
+      <figure class="headCard">
+        <canvas class="thumb" data-head="initials" width="160" height="160" aria-label="Initials sparkler head preview"></canvas>
+        <figcaption>
+          <span class="headName">Initials</span>
+          <span class="headDesc">your monogram written in embers</span>
+        </figcaption>
+      </figure>
+      <figure class="headCard">
+        <canvas class="thumb" data-head="flame" width="160" height="160" aria-label="Flame Tip sparkler head preview"></canvas>
+        <figcaption>
+          <span class="headName">Flame Tip</span>
+          <span class="headDesc">one molten teardrop at the wand tip</span>
+        </figcaption>
+      </figure>
+      <figure class="headCard">
+        <canvas class="thumb" data-head="orb" width="160" height="160" aria-label="Glitter Orb sparkler head preview"></canvas>
+        <figcaption>
+          <span class="headName">Glitter Orb</span>
+          <span class="headDesc">a dense halo of drifting sparks</span>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="headNote">PNG uploads are supported in the editor for custom heads.</p>
+    <p class="headProcedural">All heads are drawn procedurally in JavaScript - no external images.</p>
+  </div>
+</section>

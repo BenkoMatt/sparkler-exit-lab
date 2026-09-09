@@ -1,0 +1,44 @@
+[
+ {
+  "name": "s1-hero",
+  "file": "s1-hero.html",
+  "ids": "#s1hero",
+  "desc": "Hero: title 'Sparkler Exit Lab', subtitle (one line: what the site does), 2 CTA buttons: 'Try the Lab' -> #s2lab anchor, 'See how it works' -> #s1explain anchor. An inline SVG sparkler motif (wand + radiating burst, gold #ffb347 glow on dark #0b0d12). NO html/body wrapper. NO JavaScript. Styles scoped under #s1hero."
+ },
+ {
+  "name": "s2-explain",
+  "file": "s2-explain.html",
+  "ids": "#s1explain + #s2shoot",
+  "desc": "Explainer: (a) #s1explain 'Why sparklers vanish in flash photos' - prose + a small comparison list: TTL/Auto flash overpowers the scene; flash duration freezes embers as tiny points; sparkler brightness depends on ISO+aperture, NOT shutter speed; fast shutter + front-curtain = no trails. (b) #s2shoot 'Shoot it right' - a settings table with EXACT numbers from GROUND_TRUTH (F2 recipe: rear-curtain sync, shutter drag 1/15-1/60s, f/1.4-2.8, ISO 800-1600, FEC -2/3 to -1 2/3, AF-assist on) + F3 burn times (20-inch ~2 min, 36-inch ~3-5 min) + F4 spacing (two lines 4-6 ft apart, wands up angled toward center). Add an inline SVG rear-curtain diagram: two exposures, front-curtain (flash fires at start, trail leads) vs rear-curtain (flash at end, trail trails behind). NO JS, no external assets."
+ },
+ {
+  "name": "s3-lab",
+  "file": "s3-lab.html",
+  "ids": "#s2lab",
+  "desc": "Photo lab structure: dropzone (drag/drop + click-to-browse + 'Use camera' button), results area with cards: EXIF card, histogram card (canvas #histCanvas), score card (big 0-100 number #scoreNum, three sub-scores trail/ember/clipping), recommendations list #recList, and a 'Send to editor' button. All empty-state initially ('Drop a night photo to begin'). Buttons/controls must have ids the engine JS can wire: #dropzone, #fileInput, #cameraBtn, #exifCard, #scoreNum, #recList, #sendToEditor. Scoped styles under #s2lab. NO JavaScript in the fragment."
+ },
+ {
+  "name": "s4-heads",
+  "file": "s4-heads.html",
+  "ids": "#s3heads",
+  "desc": "Head library: grid of 6 head cards (Classic Burst, Heart, Star, Initials, Flame Tip, Glitter Orb), each a card with a canvas thumbnail placeholder <canvas class=thumb data-head=NAME width=160 height=160> and a name label. Note under grid: 'Click a head, then click a wand tip in the editor.' Also a hint that PNG uploads are supported in the editor. Scoped styles under #s3heads. NO JS."
+ },
+ {
+  "name": "s5-editor",
+  "file": "s5-editor.html",
+  "ids": "#s4editor",
+  "desc": "Editor structure: toolbar (head selector select #headSelect, blend select #blendSelect [screen/lighten/normal], glow slider #glowRange, tint color input #tintColor, opacity slider #opacityRange, flicker checkbox #flickerToggle, undo #undoBtn / redo #redoBtn, before/after toggle #baToggle, export #exportBtn, upload-head file input #headFileInput, reset #resetBtn) + main canvas stage (#stage wrap, canvas #editorCanvas). Hint line: 'Click a wand tip on the photo to place the selected head. Drag to move, use the handle to scale/rotate.' Scoped styles under #s4editor. NO JS."
+ },
+ {
+  "name": "s6-gallery",
+  "file": "s6-gallery.html",
+  "ids": "#s5gallery",
+  "desc": "Demo gallery: grid of 4 sample tiles. Each tile: <figure> with <img data-sample=NAME src='assets/img/sample-NAME.jpg' alt='...'> and <figcaption> short caption. Sample names: tunnel-drag (rear-curtain shutter-drag example, trails visible), flash-blown (front-curtain flash example, wands invisible), couple-walk (couple mid-walk, tunnel bokeh), sparkler-heart (heart-shaped head glowing). Each tile has a small 'Open in lab' button (class sample-open, data-sample=NAME). Captions honest and descriptive. Scoped styles under #s5gallery. NO JS."
+ },
+ {
+  "name": "s7-method",
+  "file": "s7-method.html",
+  "ids": "#s5method",
+  "desc": "Method & limitations: honest description - analysis runs entirely in your browser as a JavaScript heuristic (luminance histogram + bright-spot detection); no AI, no cloud, no uploads leave the device; EXIF is read locally. Limitations list: heuristic is not a professional review; HEIC images are not decoded outside Safari (convert to JPEG); score is an estimate, not a guarantee; sample photos are procedurally synthesized, not real weddings. Include a 'Sources' bullet list: Rangefinder, Digital Camera World, SLR Lounge, Mark Davidson guide, Printique/Adorama, Sparklers.US, Grand Wedding Exit, Comfy Pixel. Scoped styles under #s5method. NO JS."
+ }
+]

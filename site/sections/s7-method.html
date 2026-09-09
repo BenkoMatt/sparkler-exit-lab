@@ -1,0 +1,80 @@
+<!-- s7-method v1.0-DRAFT - pending adversarial review -->
+<section id="s5method" aria-labelledby="s5method-title">
+  <style>
+    #s5method {
+      background: var(--bg, #0b0d12);
+      color: var(--text, #e8e6df);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+      padding: 72px 20px 88px;
+    }
+    #s5method .s5wrap { max-width: 880px; margin: 0 auto; }
+    #s5method h2 {
+      color: var(--text, #e8e6df);
+      font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+      letter-spacing: -0.01em;
+      margin: 0 0 10px;
+    }
+    #s5method .s5lede { color: var(--muted, #9aa0ae); margin: 0 0 28px; max-width: 62ch; }
+    #s5method .s5card {
+      background: var(--panel, #141824);
+      border: 1px solid var(--border, #232936);
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin: 0 0 18px;
+    }
+    #s5method h3 { color: var(--accent, #ffb347); font-size: 1.12rem; margin: 0 0 10px; }
+    #s5method p { margin: 0 0 10px; }
+    #s5method p:last-child { margin-bottom: 0; }
+    #s5method ul { margin: 0; padding-left: 1.25rem; }
+    #s5method li { margin: 0 0 8px; }
+    #s5method li:last-child { margin-bottom: 0; }
+    #s5method a {
+      color: var(--accent, #ffb347);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    #s5method a:hover, #s5method a:focus-visible { color: var(--text, #e8e6df); }
+    #s5method .s5srcname { color: var(--muted, #9aa0ae); }
+    #s5method strong { color: var(--text, #e8e6df); }
+    @media (max-width: 640px) {
+      #s5method { padding: 52px 16px 64px; }
+      #s5method .s5card { padding: 18px 16px; }
+    }
+  </style>
+  <div class="s5wrap">
+    <h2 id="s5method-title">Method &amp; Limitations</h2>
+    <p class="s5lede">How the visibility analysis actually works, where it can be wrong, and the published sources behind the guidance on this page.</p>
+
+    <div class="s5card">
+      <h3>How the analysis works</h3>
+      <p>Everything runs client-side in JavaScript, entirely in your browser. The analyzer builds a <strong>luminance histogram</strong> from the image data, performs <strong>bright-spot and streak detection</strong> to locate sparkler trails, and assembles a <strong>0&ndash;100 visibility score</strong> from three components: trail length, ember density, and a highlight-clipping penalty.</p>
+      <p>EXIF metadata &mdash; shutter speed, ISO, aperture, and the flash-fired flag &mdash; is read locally from the file itself.</p>
+      <p><strong>Nothing is uploaded.</strong> There is no server, no accounts, and no AI or cloud vision is involved anywhere in the pipeline.</p>
+    </div>
+
+    <div class="s5card">
+      <h3>Limitations</h3>
+      <ul>
+        <li>The score is a <strong>heuristic estimate</strong>, not a professional review of your photograph.</li>
+        <li><strong>Very dark or heavily cropped photos can fool the detector</strong> and skew the result.</li>
+        <li><strong>HEIC files are not decoded outside Safari</strong> &mdash; convert to JPEG first.</li>
+        <li>The <strong>demo photos are procedurally synthesized</strong>, not real wedding photographs.</li>
+        <li><strong>Color tinting of heads is an artistic overlay</strong>, not a physical simulation of light.</li>
+      </ul>
+    </div>
+
+    <div class="s5card">
+      <h3>Sources</h3>
+      <ul>
+        <li><span class="s5srcname">Rangefinder</span> &mdash; <a href="https://rangefinderonline.com/wedding-portrait/weddings/8-tips-and-techniques-to-photographing-sparkler-exits-at-weddings/" target="_blank" rel="noopener">&ldquo;8 Tips and Techniques to Photographing Sparkler Exits&rdquo;</a></li>
+        <li><span class="s5srcname">Digital Camera World</span> &mdash; <a href="https://www.digitalcameraworld.com/tutorials/cheat-sheet-rear-curtain-flash-how-it-works-and-why-you-need-it" target="_blank" rel="noopener">rear-curtain flash cheat sheet</a></li>
+        <li><span class="s5srcname">SLR Lounge</span> &mdash; <a href="https://www.slrlounge.com/wedding-reception-shutter-drag-shot/" target="_blank" rel="noopener">shutter drag</a></li>
+        <li><span class="s5srcname">Mark Davidson</span> &mdash; <a href="https://mark-davidson.com/how-to-photograph-wedding-sparkler-exit/" target="_blank" rel="noopener">&ldquo;How to Photograph a Wedding Sparkler Exit&rdquo;</a></li>
+        <li><span class="s5srcname">Printique / Adorama</span> &mdash; <a href="https://www.printique.com/blog/sparkler-photography-5-tips/" target="_blank" rel="noopener">sparkler photography tips</a></li>
+        <li>Sparkler burn times: <a href="https://www.sparklers.us/blog/how-long-do-different-wedding-sparklers-burn/" target="_blank" rel="noopener">Sparklers.US</a>, <a href="https://grandweddingexit.com/blogs/wedding-sparkler-ideas/wedding-exit-with-sparklers" target="_blank" rel="noopener">Grand Wedding Exit</a>, and <span class="s5srcname">I Love Sparklers</span></li>
+        <li>Tunnel spacing (guest lines 4&ndash;6&nbsp;ft apart): <a href="https://www.comfypixel.com/wedding-sparkler-exit-photos-how-to-capture-the-perfect-shot/" target="_blank" rel="noopener">Comfy Pixel</a> and <span class="s5srcname">Twig &amp; Vine</span></li>
+      </ul>
+    </div>
+  </div>
+</section>

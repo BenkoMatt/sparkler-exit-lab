@@ -1,0 +1,109 @@
+<!-- s6-gallery v1.0-DRAFT - pending adversarial review -->
+<section id="s5gallery" aria-labelledby="s5gallery-h2">
+  <style>
+    /* s6-gallery scoped styles — vars with fallbacks per SPEC design tokens */
+    #s5gallery {
+      --panel: #141824;
+      --text: #e8e6df;
+      --muted: #9aa0ae;
+      --accent: #ffb347;
+      --border: #232936;
+      --bg: #0b0d12;
+    }
+    #s5gallery {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 3rem 1rem;
+      color: var(--text, #e8e6df);
+      background: var(--bg, #0b0d12);
+    }
+    #s5gallery h2 {
+      color: var(--text, #e8e6df);
+      font-size: 1.75rem;
+      margin: 0 0 0.5rem 0;
+    }
+    #s5gallery .gallery-intro {
+      color: var(--muted, #9aa0ae);
+      margin: 0 0 2rem 0;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    #s5gallery .sample-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 900px) {
+      #s5gallery .sample-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      #s5gallery .sample-grid { grid-template-columns: 1fr; }
+    }
+    #s5gallery figure.sample {
+      background: var(--panel, #141824);
+      border: 1px solid var(--border, #232936);
+      border-radius: 10px;
+      margin: 0;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    #s5gallery figure.sample img {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+    }
+    #s5gallery figcaption {
+      color: var(--muted, #9aa0ae);
+      font-size: 0.875rem;
+      line-height: 1.45;
+      flex: 1;
+    }
+    #s5gallery button.sample-open {
+      min-height: 44px;
+      padding: 0 1rem;
+      background: var(--panel, #141824);
+      color: var(--accent, #ffb347);
+      border: 1px solid var(--accent, #ffb347);
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    #s5gallery .print-note {
+      color: var(--muted, #9aa0ae);
+      font-size: 0.8rem;
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+  </style>
+  <h2 id="s5gallery-h2">Demo Gallery</h2>
+  <p class="gallery-intro">Procedurally synthesized samples &ndash; not real weddings. Load any into the lab to try the analysis and editor.</p>
+  <div class="sample-grid">
+    <figure class="sample">
+      <img data-sample="tunnel-drag" src="assets/img/sample-tunnel-drag.jpg" alt="Rear-curtain shutter-drag sample: a silhouetted figure sweeps a sparkler through a dark bokeh tunnel, leaving visible warm light trails behind the bright wand tip.">
+      <figcaption>Rear-curtain shutter-drag keeps the sparkler trails visible &ndash; the look front-curtain flash destroys.</figcaption>
+      <button class="sample-open" data-sample="tunnel-drag" type="button">Open in lab</button>
+    </figure>
+    <figure class="sample">
+      <img data-sample="flash-blown" src="assets/img/sample-flash-blown.jpg" alt="Front-curtain flash sample: same dark scene lit flat and bright by flash, sparkler wands washed out to near-invisible against the lit background.">
+      <figcaption>Front-curtain flash: the wands vanish &ndash; the exact problem this lab diagnoses.</figcaption>
+      <button class="sample-open" data-sample="flash-blown" type="button">Open in lab</button>
+    </figure>
+    <figure class="sample">
+      <img data-sample="couple-walk" src="assets/img/sample-couple-walk.jpg" alt="A silhouetted couple mid-walk through a dark tunnel of warm bokeh light circles, one holding a lit sparkler wand.">
+      <figcaption>Couple mid-walk through a bokeh tunnel &ndash; ambient-only exposure freezes the moment without flash.</figcaption>
+      <button class="sample-open" data-sample="couple-walk" type="button">Open in lab</button>
+    </figure>
+    <figure class="sample">
+      <img data-sample="sparkler-heart" src="assets/img/sample-sparkler-heart.jpg" alt="Close-up of a sparkler wand tip capped by a small heart-shaped head, glowing gold at the tip against a dark background.">
+      <figcaption>A heart-shaped head glowing at the wand tip &ndash; one of the procedural heads this lab ships.</figcaption>
+      <button class="sample-open" data-sample="sparkler-heart" type="button">Open in lab</button>
+    </figure>
+  </div>
+  <p class="print-note">All sample imagery is generated code &ndash; no copyrighted photos.</p>
+</section>

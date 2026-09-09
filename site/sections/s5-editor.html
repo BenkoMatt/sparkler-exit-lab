@@ -1,0 +1,266 @@
+<!-- s5-editor v1.0-DRAFT - pending adversarial review -->
+<section id="s4editor" aria-labelledby="s4editor-h2">
+  <style>
+    /* Scoped editor styles; every var() carries a fallback per SPEC design tokens. */
+    #s4editor {
+      --panel: var(--sparkler-panel, #141824);
+      --text: var(--sparkler-text, #e8e6df);
+      --muted: var(--sparkler-muted, #9aa0ae);
+      --accent: var(--sparkler-accent, #ffb347);
+      --accent2: var(--sparkler-accent2, #7ec8ff);
+      --border: var(--sparkler-border, #232936);
+      --bg: var(--sparkler-bg, #0b0d12);
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    #s4editor h2 {
+      margin: 0 0 .25rem;
+      font-size: 1.5rem;
+      color: var(--text);
+    }
+    #s4editor .editor-hint {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    #s4editor .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem 1rem;
+      align-items: flex-end;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem;
+      margin-bottom: 1rem;
+    }
+    #s4editor .toolbar-group {
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+    #s4editor .toolbar-group > label {
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    #s4editor select,
+    #s4editor button,
+    #s4editor input[type="color"] {
+      min-height: 44px;
+      min-width: 44px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font: inherit;
+      font-size: .95rem;
+      padding: .35rem .6rem;
+    }
+    #s4editor select:focus-visible,
+    #s4editor button:focus-visible,
+    #s4editor input:focus-visible {
+      outline: 2px solid var(--accent2);
+      outline-offset: 1px;
+    }
+    #s4editor input[type="range"] {
+      min-height: 44px;
+      accent-color: var(--accent);
+      width: 9rem;
+    }
+    #s4editor input[type="color"] {
+      width: 3.5rem;
+      padding: .25rem;
+    }
+    #s4editor input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--accent);
+    }
+    #s4editor .check-label {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 44px;
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    #s4editor button {
+      cursor: pointer;
+    }
+    #s4editor button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    #s4editor #exportBtn {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    #s4editor #resetBtn {
+      color: var(--accent2);
+      border-color: var(--accent2);
+    }
+    #s4editor #baToggle[aria-pressed="true"] {
+      background: var(--accent2);
+      color: var(--bg);
+      border-color: var(--accent2);
+    }
+    #s4editor .file-group {
+      position: relative;
+      overflow: hidden;
+    }
+    #s4editor .file-group .file-visible {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      padding: .35rem .8rem;
+      background: var(--panel);
+      border: 1px dashed var(--accent2);
+      border-radius: 10px;
+      color: var(--accent2);
+      font-size: .95rem;
+      cursor: pointer;
+    }
+    #s4editor .file-group .file-visible:hover {
+      border-style: solid;
+      background: var(--bg);
+    }
+    #s4editor .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    #s4editor #stage {
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      touch-action: none;
+    }
+    #s4editor #editorCanvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    #s4editor #stageEmpty {
+      margin: 0;
+      padding: 2rem 1.5rem;
+      color: var(--muted);
+      text-align: center;
+      font-size: .95rem;
+    }
+    @media (max-width: 640px) {
+      #s4editor {
+        padding: 1rem;
+      }
+      #s4editor input[type="range"] {
+        width: 100%;
+      }
+      #s4editor .toolbar-group {
+        flex: 1 1 45%;
+      }
+    }
+  </style>
+
+  <h2 id="s4editor-h2">Sparkler Head Editor</h2>
+  <p class="editor-hint">Click a wand tip on the photo to place the selected head. Drag to move - use the corner handle to scale and rotate.</p>
+
+  <div class="editor-toolbar" role="toolbar" aria-label="Sparkler head editor controls">
+    <div class="toolbar-group">
+      <label for="headSelect">Head</label>
+      <select id="headSelect" name="headSelect">
+        <option value="classic" selected>Classic Burst</option>
+        <option value="heart">Heart</option>
+        <option value="star">Star</option>
+        <option value="initials">Initials</option>
+        <option value="flame">Flame Tip</option>
+        <option value="orb">Glitter Orb</option>
+        <option value="upload">Uploaded PNG&hellip;</option>
+      </select>
+    </div>
+
+    <div class="toolbar-group">
+      <label for="blendSelect">Blend</label>
+      <select id="blendSelect" name="blendSelect">
+        <option value="screen" selected>screen</option>
+        <option value="lighten">lighten</option>
+        <option value="normal">normal</option>
+      </select>
+    </div>
+
+    <div class="toolbar-group">
+      <label for="glowRange">Glow</label>
+      <input type="range" id="glowRange" name="glowRange" min="0" max="100" step="1" value="60">
+    </div>
+
+    <div class="toolbar-group">
+      <label for="tintColor">Tint</label>
+      <input type="color" id="tintColor" name="tintColor" value="#ffb347">
+    </div>
+
+    <div class="toolbar-group">
+      <label for="opacityRange">Opacity</label>
+      <input type="range" id="opacityRange" name="opacityRange" min="10" max="100" step="1" value="100">
+    </div>
+
+    <div class="toolbar-group">
+      <label class="check-label" for="flickerToggle">
+        <input type="checkbox" id="flickerToggle" name="flickerToggle" checked>
+        Flicker
+      </label>
+    </div>
+
+    <div class="toolbar-group">
+      <label for="undoBtn">History</label>
+      <div class="toolbar-pair">
+        <button type="button" id="undoBtn" disabled>Undo</button>
+        <button type="button" id="redoBtn" disabled>Redo</button>
+      </div>
+    </div>
+
+    <div class="toolbar-group">
+      <label for="baToggle" class="sr-only">Before / After comparison</label>
+      <button type="button" id="baToggle" aria-pressed="false">Before / After</button>
+    </div>
+
+    <div class="toolbar-group">
+      <label for="exportBtn" class="sr-only">Export PNG</label>
+      <button type="button" id="exportBtn">Export PNG</button>
+    </div>
+
+    <div class="toolbar-group">
+      <label for="resetBtn" class="sr-only">Clear heads</label>
+      <button type="button" id="resetBtn">Clear heads</button>
+    </div>
+
+    <div class="toolbar-group file-group">
+      <input type="file" id="headFileInput" name="headFileInput" accept="image/png,image/webp" hidden>
+      <label class="file-visible" for="headFileInput">Upload head PNG</label>
+    </div>
+  </div>
+
+  <div id="stage">
+    <canvas id="editorCanvas" width="960" height="640" aria-label="Sparkler head editing canvas"></canvas>
+    <p id="stageEmpty">Open a photo from the Lab, or pick a gallery sample to start.</p>
+  </div>
+</section>

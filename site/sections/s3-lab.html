@@ -1,0 +1,248 @@
+<!-- s3-lab v1.0-DRAFT - pending adversarial review -->
+<section id="s2lab" class="lab">
+  <h2>The Photo Lab</h2>
+  <p class="lab-intro">Drop a night photo - it is analyzed entirely in your browser. Nothing is uploaded.</p>
+
+  <div id="dropzone" class="dropzone" role="group" aria-label="Photo drop zone">
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+    <p class="dz-text">Drag &amp; drop a photo here</p>
+    <p class="dz-or">or</p>
+    <div class="dz-actions">
+      <button type="button" id="fileBtn" class="lab-btn lab-btn-primary">Browse files</button>
+      <button type="button" id="cameraBtn" class="lab-btn">Use camera</button>
+    </div>
+    <small class="dz-note">HEIC photos: convert to JPEG first (not supported outside Safari).</small>
+  </div>
+
+  <div class="lab-results">
+    <article class="lab-card" id="exifCard">
+      <h3>EXIF</h3>
+      <p class="empty-state">No EXIF data found - that is fine, analysis still works.</p>
+    </article>
+
+    <article class="lab-card">
+      <h3>Histogram</h3>
+      <canvas id="histCanvas" width="560" height="180" role="img" aria-label="Luminance histogram"></canvas>
+    </article>
+
+    <article class="lab-card">
+      <h3>Sparkler visibility score</h3>
+      <p class="score-main"><span id="scoreNum">--</span><span class="score-of">/ 100</span></p>
+      <ul class="subscores">
+        <li>
+          <span class="sub-label">Trail length <span id="subTrail">--</span></span>
+          <span class="sub-explain">How much continuous sparkler streak the photo preserves.</span>
+        </li>
+        <li>
+          <span class="sub-label">Ember density <span id="subEmber">--</span></span>
+          <span class="sub-explain">How many distinct bright sparks the exposure captures.</span>
+        </li>
+        <li>
+          <span class="sub-label">Highlight clipping <span id="subClip">--</span></span>
+          <span class="sub-explain">How much of the photo is blown to pure white (lower is better).</span>
+        </li>
+      </ul>
+    </article>
+
+    <article class="lab-card">
+      <h3>What this means</h3>
+      <ul id="recList">
+        <li class="empty-state">Run an analysis to see recommendations.</li>
+      </ul>
+    </article>
+  </div>
+
+  <div class="lab-send">
+    <button type="button" id="sendToEditor" class="lab-btn lab-btn-primary">Send to editor &rarr;</button>
+  </div>
+</section>
+
+<style>
+#s2lab {
+  --panel: var(--panel, #141824);
+  --txt: var(--text, #e8e6df);
+  --mut: var(--muted, #9aa0ae);
+  --acc: var(--accent, #ffb347);
+  --acc2: var(--accent2, #7ec8ff);
+  --bd: var(--border, #232936);
+  --bad: var(--bad, #ff6b6b);
+  --good: var(--good, #7ddf8e);
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem;
+  color: var(--txt);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+#s2lab h2 {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+}
+#s2lab h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+  color: var(--acc);
+}
+#s2lab .lab-intro {
+  color: var(--mut);
+  margin: 0 0 1.5rem;
+}
+
+/* Dropzone */
+#s2lab .dropzone {
+  border: 2px dashed var(--bd);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 2rem 1.25rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+#s2lab .dropzone.is-dragover {
+  border-color: var(--acc2);
+  background: color-mix(in srgb, var(--panel) 80%, var(--acc2) 20%);
+}
+#s2lab .dz-text {
+  font-size: 1.1rem;
+  margin: 0 0 0.25rem;
+}
+#s2lab .dz-or {
+  color: var(--mut);
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+#s2lab .dz-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+#s2lab .dz-note {
+  display: block;
+  color: var(--mut);
+  font-size: 0.8rem;
+}
+
+/* Buttons - min 44px tap targets */
+#s2lab .lab-btn {
+  min-height: 44px;
+  padding: 0.55rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--txt);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+#s2lab .lab-btn:hover,
+#s2lab .lab-btn:focus-visible {
+  border-color: var(--acc2);
+  color: var(--acc2);
+  outline: none;
+}
+#s2lab .lab-btn-primary {
+  border-color: var(--acc);
+  color: var(--acc);
+}
+#s2lab .lab-btn-primary:hover,
+#s2lab .lab-btn-primary:focus-visible {
+  color: var(--acc);
+  background: color-mix(in srgb, var(--acc) 12%, transparent);
+}
+
+/* Results grid */
+#s2lab .lab-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+#s2lab .lab-card {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+#s2lab .empty-state {
+  color: var(--mut);
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0;
+}
+#s2lab .lab-card canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Score card spans full row */
+#s2lab .lab-card:nth-child(3) {
+  grid-column: 1 / -1;
+}
+#s2lab .score-main {
+  margin: 0 0 1rem;
+}
+#s2lab #scoreNum {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--acc);
+  font-variant-numeric: tabular-nums;
+}
+#s2lab .score-of {
+  color: var(--mut);
+  font-size: 1rem;
+  margin-left: 0.4rem;
+}
+#s2lab .subscores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+#s2lab .subscores li {
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+#s2lab .sub-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+#s2lab .sub-label span {
+  font-variant-numeric: tabular-nums;
+  color: var(--acc2);
+}
+#s2lab .sub-explain {
+  color: var(--mut);
+  font-size: 0.8rem;
+}
+
+/* Recommendations list */
+#s2lab #recList {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+#s2lab #recList li {
+  font-size: 0.92rem;
+}
+#s2lab #recList li.empty-state {
+  list-style: none;
+  margin-left: -1.25rem;
+}
+
+/* Send row */
+#s2lab .lab-send {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+</style>
