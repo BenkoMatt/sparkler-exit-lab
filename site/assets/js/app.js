@@ -7,6 +7,8 @@
  *    { source, imageBitmap, imageDataUrl, exif, fileName, mime, width, height }
  */
 
+import { showToast } from './toast.js';
+
 const SAMPLE_DIR = 'assets/img/';
 const DEFAULT_SAMPLE = 'sample-tunnel-drag.jpg';
 const NO_EXIF_TEXT = 'No EXIF data found - that is fine, analysis still works.';
@@ -31,7 +33,7 @@ function boot() {
     }
     // defensive: engine modules self-register, but make sure their listeners exist
     // even if the assembler did not emit their script tags (import cache dedupes).
-    for (const mod of ['./analyze.js', './heads.js']) {
+    for (const mod of ['./analyze.js', './heads.js', './editor.js']) {
       import(mod).catch(() => { /* module owner handles absence */ });
     }
   } catch (e) {
@@ -253,6 +255,13 @@ async function loadIntoPipeline({ buffer, dataUrl, fileName, mime }) {
 
     const w = bitmap.width || bitmap.naturalWidth || 0;
     const h = bitmap.height || bitmap.naturalHeight || 0;
+    // R9b: close the previous bitmap before overwrite (ImageBitmap holds GPU memory).
+    const prevBitmap = window.__sparklerLab && window.__sparklerLab.imageBitmap;
+    if (prevBitmap && prevBitmap !== bitmap &&
+        typeof prevBitmap.close === 'function' &&
+        prevBitmap !== (window.__sparklerLab.source || null)) {
+      try { prevBitmap.close(); } catch (e) { /* already detached */ }
+    }
     window.__sparklerLab = {
       ...window.__sparklerLab,
       source: bitmap,          // analyze.js contract
@@ -267,10 +276,60 @@ async function loadIntoPipeline({ buffer, dataUrl, fileName, mime }) {
 
     renderExifCard(exif, fileName);
     dispatchImageLoaded();
+    if (fileName && /sample-/.test(String(fileName))) {
+      // R3: "sample loaded" toast fires after the synchronous analyze pass, so the
+      // score is real; falls back to a plain ack if analysis is unavailable.
+      const a = (typeof window !== 'undefined' && window.__sparklerLab &&
+        window.__sparklerLab.analysis) || null;
+      showToast(a && Number.isFinite(a.total)
+        ? 'Sample loaded \u2014 score ' + a.total
+        : 'Sample loaded');
+      scrollToEditorToolbar();
+      updateLabThumb();
+    }
   } catch (e) {
     console.error('[app] pipeline failed:', e);
     try { showCardNotice('Something went wrong loading that photo. Try another file.', true); } catch (_) {}
   }
+}
+
+/* R3b: land the editor toolbar + canvas both in view after a sample load. */
+function scrollToEditorToolbar() {
+  try {
+    const toolbar = document.querySelector('#s4editor .editor-toolbar');
+    const section = document.getElementById('s4editor');
+    if (!toolbar || !section) return;
+    if (typeof toolbar.scrollIntoView === 'function') {
+      toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (typeof section.scrollIntoView === 'function') {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (e) { console.warn('[app] editor scroll failed:', e); }
+}
+
+/* R3c: small preview thumb of the loaded image inside the lab results. */
+function updateLabThumb() {
+  try {
+    const wrap = document.querySelector('#s2lab .lab-results');
+    if (!wrap) return;
+    const url = window.__sparklerLab && window.__sparklerLab.imageDataUrl;
+    if (!url) return;
+    let fig = document.getElementById('labThumb');
+    if (!fig) {
+      fig = document.createElement('figure');
+      fig.id = 'labThumb';
+      fig.className = 'lab-thumb';
+      const img = document.createElement('img');
+      img.alt = 'Loaded photo preview';
+      const cap = document.createElement('figcaption');
+      cap.textContent = 'Loaded photo';
+      fig.appendChild(img);
+      fig.appendChild(cap);
+      wrap.insertBefore(fig, wrap.firstChild);
+    }
+    const img = fig.querySelector('img');
+    if (img) img.src = url;
+  } catch (e) { console.warn('[app] lab thumb failed:', e); }
 }
 
 function bufferToDataUrl(buffer, mime) {
@@ -380,8 +439,8 @@ function cameraSupported() {
 function cameraFallback() {
   try {
     showCardNotice(CAMERA_FALLBACK_TEXT, true);
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) fileInput.click();
+    showToast(CAMERA_FALLBACK_TEXT);
+    // R6: toast + card notice ONLY - no forced file-picker auto-open.
   } catch (e) {
     console.error('[app] camera fallback failed:', e);
   }
@@ -509,6 +568,7 @@ function wireSamples() {
 }
 
 function loadSample(url, fileName) {
+  showToast('Loading sample\u2026');
   fetch(url)
     .then((res) => {
       if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + url);
@@ -526,6 +586,7 @@ function wireSendToEditor() {
   btn.addEventListener('click', () => {
     try {
       if (!(window.__sparklerLab && window.__sparklerLab.imageDataUrl)) {
+        showToast('Load a photo first');
         showCardNotice('Load a photo first, then send it to the editor.', false);
         return;
       }

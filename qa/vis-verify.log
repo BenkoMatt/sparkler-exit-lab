@@ -1,0 +1,6 @@
+canvas box: {"x":226,"y":1246.828125,"w":988,"h":658.859375}
+layers: 0
+desk overflow: []
+mobile overflow: ["table L21 R661","caption.s2-lede L21 R661","thead L21 R661","tr L21 R661","th L321 R661","tbody L21 R661","tr L21 R661","td.s2-why L321 R661","strong L492 R527","strong L334 R398","tr L21 R661","td.s2-why L321 R661","tr L21 R661","td.s2-why L321 R661","tr L21 R661"]
+mobile tap<44px: ["a.brand 158x24","a 54x24","a 42x24","a 27x24","a 46x24","a 44x24","a 52x24","a 55x24","input 24x24","a 99x19","a 102x19","a 93x19","a 187x39","a 125x16"]
+mobile h-scroll px: 0

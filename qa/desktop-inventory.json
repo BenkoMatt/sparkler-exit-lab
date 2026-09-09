@@ -1,0 +1,382 @@
+[
+ {
+  "tag": "A",
+  "txt": "\u26a1 Sparkler Exit Lab",
+  "id": "",
+  "cls": "brand",
+  "x": 200,
+  "y": 10,
+  "w": 158,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Explain",
+  "id": "",
+  "cls": "",
+  "x": 376,
+  "y": 10,
+  "w": 54,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Shoot",
+  "id": "",
+  "cls": "",
+  "x": 447,
+  "y": 10,
+  "w": 42,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Lab",
+  "id": "",
+  "cls": "",
+  "x": 508,
+  "y": 10,
+  "w": 27,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Heads",
+  "id": "",
+  "cls": "",
+  "x": 553,
+  "y": 10,
+  "w": 46,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Editor",
+  "id": "",
+  "cls": "",
+  "x": 617,
+  "y": 10,
+  "w": 44,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Gallery",
+  "id": "",
+  "cls": "",
+  "x": 678,
+  "y": 10,
+  "w": 52,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Method",
+  "id": "",
+  "cls": "",
+  "x": 749,
+  "y": 10,
+  "w": 55,
+  "h": 24
+ },
+ {
+  "tag": "A",
+  "txt": "Try the Lab",
+  "id": "",
+  "cls": "s1-btn s1-btn--primary",
+  "x": 224,
+  "y": 479,
+  "w": 151,
+  "h": 46
+ },
+ {
+  "tag": "A",
+  "txt": "See how it works",
+  "id": "",
+  "cls": "s1-btn s1-btn--ghost",
+  "x": 389,
+  "y": 479,
+  "w": 204,
+  "h": 46
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Browse files",
+  "id": "fileBtn",
+  "cls": "lab-btn lab-btn-primary",
+  "x": 581,
+  "y": 3139,
+  "w": 133,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Use camera",
+  "id": "cameraBtn",
+  "cls": "lab-btn",
+  "x": 726,
+  "y": 3139,
+  "w": 133,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Send to editor \u2192",
+  "id": "sendToEditor",
+  "cls": "lab-btn lab-btn-primary",
+  "x": 973,
+  "y": 3823,
+  "w": 167,
+  "h": 44
+ },
+ {
+  "tag": "SELECT",
+  "txt": "Classic Burst | Heart | Star | Initials | Flame Tip | Glitter Orb | Uplo",
+  "id": "headSelect",
+  "cls": "",
+  "x": 238,
+  "y": 4674,
+  "w": 166,
+  "h": 44
+ },
+ {
+  "tag": "SELECT",
+  "txt": "screen | lighten | normal",
+  "id": "blendSelect",
+  "cls": "",
+  "x": 420,
+  "y": 4674,
+  "w": 95,
+  "h": 44
+ },
+ {
+  "tag": "INPUT",
+  "txt": "60",
+  "id": "glowRange",
+  "cls": "",
+  "x": 533,
+  "y": 4672,
+  "w": 144,
+  "h": 44
+ },
+ {
+  "tag": "INPUT",
+  "txt": "#ffb347",
+  "id": "tintColor",
+  "cls": "",
+  "x": 695,
+  "y": 4674,
+  "w": 56,
+  "h": 44
+ },
+ {
+  "tag": "INPUT",
+  "txt": "100",
+  "id": "opacityRange",
+  "cls": "",
+  "x": 769,
+  "y": 4672,
+  "w": 144,
+  "h": 44
+ },
+ {
+  "tag": "INPUT",
+  "txt": "on",
+  "id": "flickerToggle",
+  "cls": "",
+  "x": 935,
+  "y": 4684,
+  "w": 24,
+  "h": 24
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Undo",
+  "id": "undoBtn",
+  "cls": "",
+  "x": 1040,
+  "y": 4674,
+  "w": 61,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Redo",
+  "id": "redoBtn",
+  "cls": "",
+  "x": 1106,
+  "y": 4674,
+  "w": 59,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Before / After",
+  "id": "baToggle",
+  "cls": "",
+  "x": 238,
+  "y": 4730,
+  "w": 122,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Export PNG",
+  "id": "exportBtn",
+  "cls": "",
+  "x": 376,
+  "y": 4730,
+  "w": 108,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Clear heads",
+  "id": "resetBtn",
+  "cls": "",
+  "x": 500,
+  "y": 4730,
+  "w": 112,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Open in lab",
+  "id": "",
+  "cls": "sample-open",
+  "x": 229,
+  "y": 5912,
+  "w": 214,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Open in lab",
+  "id": "",
+  "cls": "sample-open",
+  "x": 485,
+  "y": 5912,
+  "w": 214,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Open in lab",
+  "id": "",
+  "cls": "sample-open",
+  "x": 741,
+  "y": 5912,
+  "w": 214,
+  "h": 44
+ },
+ {
+  "tag": "BUTTON",
+  "txt": "Open in lab",
+  "id": "",
+  "cls": "sample-open",
+  "x": 997,
+  "y": 5912,
+  "w": 214,
+  "h": 44
+ },
+ {
+  "tag": "A",
+  "txt": "\u201c8 Tips and Techniques to Photographing Sparkler Exits\u201d",
+  "id": "",
+  "cls": "",
+  "x": 449,
+  "y": 6963,
+  "w": 452,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "rear-curtain flash cheat sheet",
+  "id": "",
+  "cls": "",
+  "x": 522,
+  "y": 6997,
+  "w": 236,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "shutter drag",
+  "id": "",
+  "cls": "",
+  "x": 445,
+  "y": 7032,
+  "w": 99,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "\u201cHow to Photograph a Wedding Sparkler Exit\u201d",
+  "id": "",
+  "cls": "",
+  "x": 470,
+  "y": 7066,
+  "w": 367,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "sparkler photography tips",
+  "id": "",
+  "cls": "",
+  "x": 511,
+  "y": 7100,
+  "w": 207,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "Sparklers.US",
+  "id": "",
+  "cls": "",
+  "x": 494,
+  "y": 7135,
+  "w": 102,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "Grand Wedding Exit",
+  "id": "",
+  "cls": "",
+  "x": 606,
+  "y": 7135,
+  "w": 159,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "Comfy Pixel",
+  "id": "",
+  "cls": "",
+  "x": 657,
+  "y": 7169,
+  "w": 93,
+  "h": 19
+ },
+ {
+  "tag": "A",
+  "txt": "Method & Limitations",
+  "id": "",
+  "cls": "",
+  "x": 1092,
+  "y": 7432,
+  "w": 154,
+  "h": 16
+ },
+ {
+  "tag": "A",
+  "txt": "source on GitHub",
+  "id": "",
+  "cls": "",
+  "x": 709,
+  "y": 7469,
+  "w": 125,
+  "h": 16
+ }
+]

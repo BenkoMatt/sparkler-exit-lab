@@ -71,6 +71,7 @@
       border-radius: 10px;
       font-size: 0.875rem;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
       width: 100%;
     }
@@ -106,4 +107,56 @@
     </figure>
   </div>
   <p class="print-note">All sample imagery is generated code &ndash; no copyrighted photos.</p>
+  <style>
+    /* P4 R3/R9: shared toast + lab-thumb + scroll alignment + a11y/polish rules. */
+    #labToast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(8px);
+      z-index: 200;
+      max-width: min(92vw, 560px);
+      padding: 10px 18px;
+      background: var(--panel, #141824);
+      color: var(--text, #e8e6df);
+      border: 1px solid var(--accent, #ffb347);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 0.92rem;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #labToast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #labToast { transition: none; }
+    }
+    #s2lab .lab-results { scroll-margin-top: 72px; }
+    #s4editor { scroll-margin-top: 72px; }
+    #s2lab .lab-thumb {
+      margin: 0;
+      padding: 0.5rem;
+      background: var(--panel, #141824);
+      border: 1px solid var(--border, #232936);
+      border-radius: 10px;
+      text-align: center;
+    }
+    #s2lab .lab-thumb img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto;
+    }
+    #s2lab .lab-thumb figcaption {
+      color: var(--muted, #9aa0ae);
+      font-size: 0.75rem;
+      margin-top: 0.35rem;
+    }
+  </style>
 </section>

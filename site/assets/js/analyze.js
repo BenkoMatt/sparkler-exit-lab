@@ -407,17 +407,19 @@ function buildRecommendations(a, exif, nTrails) {
     recs.push('strong sparkler visibility - this is the shutter-drag look');
   }
   // honest generic fill so the list is never thinner than 3
+  // R4: cap specifics at 3 and always let the burn-time guidance into the card.
+  const main = recs.slice(0, 3);
   const pool = [
-    'no trails detected - try a 1-4s exposure and move the sparkler while the shutter is open',
+    'shoot several frames quickly - sparklers burn 1-5 min depending on size, so pre-compose before lighting',
+    'no trails detected - try a much slower shutter (below 1/15 s) or an ambient-only exposure',
     'too few embers - a wider aperture or higher ISO gathers more sparkler light',
-    'brace the camera (tripod, wall, elbow) - long hand-held exposures blur everything',
-    'shoot several frames quickly - sparklers burn 30-60s, so pre-compose before lighting'
+    'brace the camera (tripod, wall, elbow) - long hand-held exposures blur everything'
   ];
   for (const p of pool) {
-    if (recs.length >= 3) break;
-    if (!recs.includes(p)) recs.push(p);
+    if (main.length >= 4) break;
+    if (!main.includes(p)) main.push(p);
   }
-  return recs;
+  return main;
 }
 
 function populateUI(analysis, exif) {

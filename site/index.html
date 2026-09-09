@@ -29,6 +29,10 @@ header#topnav nav { max-width:1080px; margin:0 auto; padding:10px 20px; display:
 header#topnav a { color:var(--text,#e8e6df); text-decoration:none; font-size:.92rem; }
 header#topnav a:hover { color:var(--accent,#ffb347); }
 header#topnav .brand { font-weight:700; color:var(--accent,#ffb347); }
+@media (max-width:640px) {
+  header#topnav nav { gap:6px 14px; }
+  header#topnav a { display:inline-flex; align-items:center; min-height:44px; }
+}
 footer {
   border-top:1px solid var(--border,#232936); margin-top:64px;
   padding:28px 20px; color:var(--muted,#9aa0ae); font-size:.9rem; text-align:center;
@@ -87,6 +91,20 @@ footer {
 #s2shoot tbody tr:last-child td{border-bottom:0}
 #s2shoot td.s2-val{white-space:nowrap;font-weight:600}
 #s2shoot td.s2-why{color:var(--muted,#9aa0ae)}
+/* R1: stacked-collapse of the settings table under 520px (label/value/why blocks). */
+@media (max-width:520px){
+  #s2shoot .s2-tablewrap{overflow-x:visible;border:0;background:transparent;padding:0}
+  #s2shoot table{min-width:0;display:block}
+  #s2shoot thead{display:none}
+  #s2shoot tbody{display:block}
+  #s2shoot tbody tr{display:block;border:1px solid var(--border,#232936);border-radius:10px;background:var(--panel,#141824);margin:0 0 .6rem;padding:.55rem .8rem}
+  #s2shoot tbody td{display:block;border-bottom:0;padding:.3rem 0}
+  #s2shoot tbody td:first-child{display:none}
+  #s2shoot tbody td.s2-val{white-space:normal}
+  #s2shoot tbody td.s2-val::before{content:"Setting";display:block;color:var(--accent,#ffb347);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.15rem}
+  #s2shoot tbody td.s2-why{font-size:.85rem}
+  #s2shoot .s2-diagram{overflow-x:auto}
+}
 #s2shoot .s2-ops{list-style:none;margin:.6rem 0 0;padding:0;display:grid;gap:.55rem}
 #s2shoot .s2-ops li{background:var(--panel,#141824);border:1px solid var(--border,#232936);border-radius:10px;padding:.6rem .85rem}
 #s2shoot .s2-ops .s2-why{color:var(--muted,#9aa0ae);font-size:.92rem}
@@ -224,6 +242,8 @@ footer {
 }
 #s2lab .score-main {
   margin: 0 0 1rem;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
 }
 #s2lab #scoreNum {
   font-size: 3rem;
@@ -603,6 +623,7 @@ footer {
       border-radius: 10px;
       font-size: 0.875rem;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
       width: 100%;
     }
@@ -611,6 +632,58 @@ footer {
       font-size: 0.8rem;
       margin-top: 1.5rem;
       text-align: center;
+    }
+  
+
+    /* P4 R3/R9: shared toast + lab-thumb + scroll alignment + a11y/polish rules. */
+    #labToast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(8px);
+      z-index: 200;
+      max-width: min(92vw, 560px);
+      padding: 10px 18px;
+      background: var(--panel, #141824);
+      color: var(--text, #e8e6df);
+      border: 1px solid var(--accent, #ffb347);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 0.92rem;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #labToast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #labToast { transition: none; }
+    }
+    #s2lab .lab-results { scroll-margin-top: 72px; }
+    #s4editor { scroll-margin-top: 72px; }
+    #s2lab .lab-thumb {
+      margin: 0;
+      padding: 0.5rem;
+      background: var(--panel, #141824);
+      border: 1px solid var(--border, #232936);
+      border-radius: 10px;
+      text-align: center;
+    }
+    #s2lab .lab-thumb img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto;
+    }
+    #s2lab .lab-thumb figcaption {
+      color: var(--muted, #9aa0ae);
+      font-size: 0.75rem;
+      margin-top: 0.35rem;
     }
   
 
@@ -685,7 +758,7 @@ footer {
         <a class="s1-btn s1-btn--ghost" href="#s1explain">See how it works</a>
       </div>
       <ul class="s1-stats">
-        <li><strong>6</strong> procedural heads</li>
+        <li><strong>6</strong> procedural heads + PNG upload</li>
         <li><strong>100%</strong> client-side</li>
         <li><strong>0</strong> uploads</li>
       </ul>
@@ -764,7 +837,7 @@ footer {
         <tr><td>Shutter (drag)</td><td class="s2-val">1/15–1/60&nbsp;s</td><td class="s2-why">Long enough for the ambient and sparkler light to burn in as trails; the flash still freezes your couple.</td></tr>
         <tr><td>Aperture</td><td class="s2-val">f/1.4–2.8</td><td class="s2-why">Wide glass pulls in the ambient glow — and aperture is one of the two controls that actually brighten the sparklers.</td></tr>
         <tr><td>ISO</td><td class="s2-val">800–1600</td><td class="s2-why">The other sparkler-brightness control; lift it until the ambient exposure looks right.</td></tr>
-        <tr><td>Flash FEC</td><td class="s2-val">−2/3 to −1&nbsp;2/3 stops</td><td class="s2-why">Deliberately underexpose the flash so it stays under the ambient — visible enough to light the couple, never enough to overpower the scene.</td></tr>
+        <tr><td>Flash exposure compensation (FEC)</td><td class="s2-val">−2/3 to −1&nbsp;2/3 stops</td><td class="s2-why">Deliberately underexpose the flash so it stays under the ambient — visible enough to light the couple, never enough to overpower the scene.</td></tr>
         <tr><td>AF-assist beam</td><td class="s2-val">On</td><td class="s2-why">The focus light finds your subjects in the dark; drop Eye-AF so focus doesn't jump to the guests.</td></tr>
       </tbody>
     </table>
@@ -838,7 +911,7 @@ footer {
     <small class="dz-note">HEIC photos: convert to JPEG first (not supported outside Safari).</small>
   </div>
 
-  <div class="lab-results">
+  <div class="lab-results" aria-live="polite">
     <article class="lab-card" id="exifCard">
       <h3>EXIF</h3>
       <p class="empty-state">No EXIF data found - that is fine, analysis still works.</p>
@@ -939,7 +1012,7 @@ footer {
 <!-- s5-editor v1.0-DRAFT - pending adversarial review -->
 <section id="s4editor" aria-labelledby="s4editor-h2">
   <h2 id="s4editor-h2">Sparkler Head Editor</h2>
-  <p class="editor-hint">Click a wand tip on the photo to place the selected head. Drag to move - use the corner handle to scale and rotate.</p>
+  <p class="editor-hint">Click a wand tip to place &middot; drag to move &middot; corner handle to scale/rotate &middot; double-tap (or long-press) a head to remove &middot; Esc to deselect.</p>
 
   <div class="editor-toolbar" role="toolbar" aria-label="Sparkler head editor controls">
     <div class="toolbar-group">
@@ -1048,7 +1121,7 @@ footer {
     </figure>
   </div>
   <p class="print-note">All sample imagery is generated code &ndash; no copyrighted photos.</p>
-</section>
+  </section>
 <!-- ==== s7-method ==== -->
 <!-- s7-method v1.0-DRAFT - pending adversarial review -->
 <section id="s5method" aria-labelledby="s5method-title">
@@ -1082,8 +1155,8 @@ footer {
         <li><span class="s5srcname">SLR Lounge</span> &mdash; <a href="https://www.slrlounge.com/wedding-reception-shutter-drag-shot/" target="_blank" rel="noopener">shutter drag</a></li>
         <li><span class="s5srcname">Mark Davidson</span> &mdash; <a href="https://mark-davidson.com/how-to-photograph-wedding-sparkler-exit/" target="_blank" rel="noopener">&ldquo;How to Photograph a Wedding Sparkler Exit&rdquo;</a></li>
         <li><span class="s5srcname">Printique / Adorama</span> &mdash; <a href="https://www.printique.com/blog/sparkler-photography-5-tips/" target="_blank" rel="noopener">sparkler photography tips</a></li>
-        <li>Sparkler burn times: <a href="https://www.sparklers.us/blog/how-long-do-different-wedding-sparklers-burn/" target="_blank" rel="noopener">Sparklers.US</a>, <a href="https://grandweddingexit.com/blogs/wedding-sparkler-ideas/wedding-exit-with-sparklers" target="_blank" rel="noopener">Grand Wedding Exit</a>, and <span class="s5srcname">I Love Sparklers</span></li>
-        <li>Tunnel spacing (guest lines 4&ndash;6&nbsp;ft apart): <a href="https://www.comfypixel.com/wedding-sparkler-exit-photos-how-to-capture-the-perfect-shot/" target="_blank" rel="noopener">Comfy Pixel</a> and <span class="s5srcname">Twig &amp; Vine</span></li>
+        <li>Sparkler burn times: <a href="https://www.sparklers.us/blog/how-long-do-different-wedding-sparklers-burn/" target="_blank" rel="noopener">Sparklers.US</a>, <a href="https://grandweddingexit.com/blogs/wedding-sparkler-ideas/wedding-exit-with-sparklers" target="_blank" rel="noopener">Grand Wedding Exit</a>, and <span class="s5srcname">I Love Sparklers (verified via multiple sparkler-retailer guides; offline verification)</span></li>
+        <li>Tunnel spacing (guest lines 4&ndash;6&nbsp;ft apart): <a href="https://www.comfypixel.com/wedding-sparkler-exit-photos-how-to-capture-the-perfect-shot/" target="_blank" rel="noopener">Comfy Pixel</a> and <span class="s5srcname">Twig &amp; Vine (verified via multiple sparkler-retailer guides; offline verification)</span></li>
       </ul>
     </div>
   </div>

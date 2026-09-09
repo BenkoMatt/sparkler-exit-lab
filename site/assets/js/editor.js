@@ -16,6 +16,7 @@
  *     ctx translate/rotate are applied by this module.
  */
 import { drawHead } from './heads.js';
+import { showToast } from './toast.js';
 
 const LS_KEY = 'sparklerLabEditor';
 const MAX_STACK = 50;
@@ -74,6 +75,7 @@ function initEditor() {
   let baHeld = false, baSplit = false;
   let rafId = 0;
   let lastUrlLoaded = null;
+  let lastBitmapLoaded = null; // R9a: mirror of lastUrlLoaded for the bitmap path
 
   const sel = () => layers.find((l) => l.id === selectedId);
   const layersJson = () => JSON.stringify(layers);
@@ -185,7 +187,13 @@ function initEditor() {
     const lab = (window.__sparklerLab = window.__sparklerLab || {});
     const detail = (ev && ev.detail) || {};
     const url = lab.imageDataUrl || detail.imageDataUrl || detail.url || null;
-    if (lab.imageBitmap) { lastUrlLoaded = null; loadEditorImage(lab.imageBitmap); return; }
+    if (lab.imageBitmap) {
+      if (lab.imageBitmap === lastBitmapLoaded) return; // R9a: duplicate dispatch guard (window+document)
+      lastBitmapLoaded = lab.imageBitmap;
+      lastUrlLoaded = url || null; // remember it so a later same-dataURL dispatch skips the rebuild
+      loadEditorImage(lab.imageBitmap);
+      return;
+    }
     if (!url) return;
     if (url === lastUrlLoaded) return; // duplicate dispatch (window+document) guard
     lastUrlLoaded = url;
@@ -666,6 +674,7 @@ function initEditor() {
         const lab = (window.__sparklerLab = window.__sparklerLab || {});
         lab.imageDataUrl = dataUrl;
         delete lab.imageBitmap;
+        lastBitmapLoaded = null; // R9a: new image on the url path - allow its rebuild
         lab.sampleName = name;
         const ev = new CustomEvent('sparklerlab:image-loaded', { detail: { sample: name, imageDataUrl: dataUrl } });
         window.dispatchEvent(ev);
@@ -677,6 +686,32 @@ function initEditor() {
       } catch (err) {
         console.warn('[editor] sample "' + name + '" failed to load:', err);
       }
+    });
+  });
+
+  /* ---------------- R2: head-library cards are clickable ---------------- */
+  document.querySelectorAll('#s3heads .headCard').forEach((card) => {
+    if (card.dataset.headBound) return;
+    card.dataset.headBound = '1';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', 'Select ' + (card.querySelector('.headName') || {}).textContent + ' head');
+    const selectHead = () => {
+      const thumb = card.querySelector('.thumb');
+      const kind = thumb ? thumb.getAttribute('data-head') : null;
+      if (!kind || !headSelect || !headSelect.querySelector('option[value="' + kind + '"]')) return;
+      headSelect.value = kind;
+      defaults.kind = kind;
+      headSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      const ed = document.getElementById('s4editor');
+      if (ed && typeof ed.scrollIntoView === 'function') {
+        ed.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      }
+      showToast('HEAD selected - click a wand tip');
+    };
+    card.addEventListener('click', selectHead);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectHead(); }
     });
   });
 

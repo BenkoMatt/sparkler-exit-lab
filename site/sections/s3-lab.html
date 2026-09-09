@@ -14,7 +14,7 @@
     <small class="dz-note">HEIC photos: convert to JPEG first (not supported outside Safari).</small>
   </div>
 
-  <div class="lab-results">
+  <div class="lab-results" aria-live="polite">
     <article class="lab-card" id="exifCard">
       <h3>EXIF</h3>
       <p class="empty-state">No EXIF data found - that is fine, analysis still works.</p>
@@ -182,6 +182,8 @@
 }
 #s2lab .score-main {
   margin: 0 0 1rem;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
 }
 #s2lab #scoreNum {
   font-size: 3rem;

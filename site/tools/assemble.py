@@ -64,6 +64,10 @@ header#topnav nav {{ max-width:1080px; margin:0 auto; padding:10px 20px; display
 header#topnav a {{ color:var(--text,#e8e6df); text-decoration:none; font-size:.92rem; }}
 header#topnav a:hover {{ color:var(--accent,#ffb347); }}
 header#topnav .brand {{ font-weight:700; color:var(--accent,#ffb347); }}
+@media (max-width:640px) {{
+  header#topnav nav {{ gap:6px 14px; }}
+  header#topnav a {{ display:inline-flex; align-items:center; min-height:44px; }}
+}}
 footer {{
   border-top:1px solid var(--border,#232936); margin-top:64px;
   padding:28px 20px; color:var(--muted,#9aa0ae); font-size:.9rem; text-align:center;
