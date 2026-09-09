@@ -1,4 +1,4 @@
-import { drawHead, init } from '/root/sparkler-lab/site/assets/js/heads.js';
+import { drawHead, init } from '/root/projects/sites/sparkler-lab/site/assets/js/heads.js';
 
 const ctx2dStub = () => {
   const grad = { addColorStop() {} };
