@@ -30,3 +30,4 @@
 | 09-09 04:55 | P6-liveverify | live https | live-editor-1440.png + live-mobile-390.png | PASS | live journey: sample 46pts/6 trails, head card->heart placed, export 553KB download, 8/8 sections, console clean |
 | 09-09 09:44 | V2-heads | child verification | qa/shots/headsv2-preview.png | PASS | 6 kinds structurally distinct: gravity 50.4% down-mass (classic 34.1), fan 63.4% right (38.1), dense p95rad 20px (52px), scale-invariance PASS (identical normalized extents) |
 | 09-09 09:46 | V2-integration | Playwright | v2-heads-library-1440.png, v2-editor-gravity-1440.png | PASS | 6 thumbs painted, card->select mapping 5/5, gravity head placed, export 773KB, console clean |
+| 09-09 09:56 | V2-deploy | live URL | pages build built @172abab | PASS | live copy "realism variants" + gravity card present; live journey: crackle head placed via card, 0 errors |
