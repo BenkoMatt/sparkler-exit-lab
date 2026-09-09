@@ -3,7 +3,7 @@
 - **Status:** P0+P1 COMPLETE (00:38 EDT) · P2 engines in progress
 - **Repo:** local git at /root/sparkler-lab (main branch), remote BenkoMatt/sparkler-exit-lab (create at P1 commit)
 - **Key files:** MASTER_PROMPT.md (plan), GROUND_TRUTH.md (verified facts), SPEC.md (contracts), QA_LOG.md (gates)
-- **Heartbeat:** 2026-09-09 01:00 EDT — P2 DONE: all 5 engine modules verified end-to-end (2 parent integration fixes); committed+pushed — P1 DONE 00:38 — 7 fragments gated, index.html assembled (48KB), visual gates PASS 3 viewports, commit de9f619 pushed, GH Pages enabled (benkomatt.github.io/sparkler-exit-lab). P0 baseline: ground truth verified (2 deltas: burn 20in≈1–2min/36in≈3–5min, spacing 4–6ft), SPEC locked.
+- **Heartbeat:** 2026-09-09 04:55 EDT — DEPLOYED: https://benkomatt.github.io/sparkler-exit-lab/ live-verified (full journey + export + console clean). Watchdog cron removal pending final commit — P1 DONE 00:38 — 7 fragments gated, index.html assembled (48KB), visual gates PASS 3 viewports, commit de9f619 pushed, GH Pages enabled (benkomatt.github.io/sparkler-exit-lab). P0 baseline: ground truth verified (2 deltas: burn 20in≈1–2min/36in≈3–5min, spacing 4–6ft), SPEC locked.
 - **Next:** P2 wave — engine children (b) intake+EXIF, (c) analyze, (d) heads, (e) editor, each with milestone screenshot gate; then P3 review
 
 ## Phase log
@@ -12,5 +12,5 @@
 - [x] P2 00:05–01:00 — engines (a)–(e) DONE, all milestone gates PASS
 - [ ] P3 5:45–7:00 — adversarial review (fact/UX/visual/code)
 - [ ] P4 7:00–8:30 — fix wave
-- [ ] P5 8:30–9:30 — assemble + deploy + verify
-- [ ] P6 9:30–10:00 — post-deploy + delivery report
+- [x] P5+P6 04:40–04:55 — deployed + live-verified (eb640ef)
+- [ ] P6 — delivery report in chat; watchdog removal
