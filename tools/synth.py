@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFilter
 random.seed(57005)  # fixed seed (0xDEAD) for reproducibility
 
 W, H = 1600, 1067
-OUT = "/root/sparkler-lab/site/assets/img"
+OUT = "/root/projects/sites/sparkler-lab/site/assets/img"
 
 def night_bg(warm=0.0, lift=0):
     """Dark scene: gradient sky, faint ground, bokeh."""
