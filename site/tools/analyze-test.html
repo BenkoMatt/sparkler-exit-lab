@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>analyze.js self-test</title>
+<style>
+  body { background: #0b0d12; color: #e8e6df; font: 14px system-ui, sans-serif; padding: 2rem; }
+  canvas { border: 1px solid #232936; background: #141824; display: block; margin: 0.5rem 0; }
+  pre { background: #141824; border: 1px solid #232936; padding: 1rem; border-radius: 8px; white-space: pre-wrap; }
+  .pass { color: #7ddf8e; }
+  .fail { color: #ff6b6b; }
+  ul#recList { padding-left: 1.25rem; }
+</style>
+</head>
+<body>
+<h1>analyze.js self-test</h1>
+<p>Scene A: dark scene, 3 streaks (trails) + 20 embers + clip patch, in disjoint bands.
+   Scene B: flash-blown (all white + one ember). Loads analyze.js, runs both, prints breakdowns.</p>
+
+<canvas id="testSrc" width="800" height="500"></canvas>
+<canvas id="testFlash" width="640" height="400"></canvas>
+<canvas id="histCanvas" width="560" height="180"></canvas>
+
+<!-- lab UI ids from s3-lab.html so populateUI has real targets -->
+<p>score: <span id="scoreNum">--</span></p>
+<p><span id="subTrail">--</span> | <span id="subEmber">--</span> | <span id="subClip">--</span></p>
+<ul id="recList"><li>empty</li></ul>
+
+<pre id="out">running...</pre>
+<script type="module">
+  const out = document.getElementById('out');
+
+  function drawSceneA() {
+    const c = document.getElementById('testSrc');
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#05060a';
+    ctx.fillRect(0, 0, c.width, c.height);
+    // BAND 1 (y 20-200): 3 streaks, single-pass strokes
+    const streaks = [[40, 40, 300, 120], [420, 30, 700, 110], [60, 160, 360, 200]];
+    for (const [x1, y1, x2, y2] of streaks) {
+      ctx.strokeStyle = 'rgba(255, 233, 196, 0.35)';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 9;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.strokeStyle = '#ffe9c4';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    // BAND 2 (y 285-403): 20 embers, rows y~300 and y~380, min center gap 64 > 2*glow
+    for (let i = 0; i < 20; i++) {
+      const x = 40 + (i % 10) * 76 + (i % 3) * 6;
+      const y = (i < 10 ? 300 : 380) + (i % 3) * 4;
+      const r = 4 + (i % 3);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r + 8);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.45, '#ffd27a');
+      g.addColorStop(1, 'rgba(5, 6, 10, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, r + 8, 0, Math.PI * 2); ctx.fill();
+    }
+    // BAND 3 (y 440-490): small clip patch, clear of everything.
+    // Kept ~1% of frame: a larger patch alone fills the top histogram bin past the
+    // 2% tail, which legitimately drives p98 (and thus threshold) to 255.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(620, 440, 110, 40);
+    return c;
+  }
+
+  function drawSceneB() {
+    // flash-blown: white wall, one ember, no streaks
+    const c = document.getElementById('testFlash');
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    const g = ctx.createRadialGradient(320, 200, 0, 320, 200, 14);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.45, '#ffd27a');
+    g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(320, 200, 14, 0, Math.PI * 2); ctx.fill();
+    return c;
+  }
+
+  function report(text, ok) {
+    const p = document.createElement('p');
+    p.textContent = (ok === true ? 'PASS ' : ok === false ? 'FAIL ' : '') + text;
+    p.className = ok === true ? 'pass' : ok === false ? 'fail' : '';
+    document.body.appendChild(p);
+    return ok;
+  }
+
+  const results = [];
+  try {
+    const srcA = drawSceneA();
+    const srcB = drawSceneB();
+    const mod = await import('../assets/js/analyze.js');
+    if (typeof mod.analyzeImage !== 'function') throw new Error('analyzeImage export missing');
+
+    // ---- scene A: direct call ----
+    const a = mod.analyzeImage(srcA, { shutter: '1/125', aperture: 'f/2.8', iso: 200, flashFired: true });
+    if (!a) throw new Error('analyzeImage returned null for scene A');
+    // expected component scores straight from the spec's formulas, computed from counts
+    const expTrail = Math.max(0, Math.min(40, Math.round(40 * (1 - Math.exp(-a.nTrails / 6)))));
+    const expEmber = Math.max(0, Math.min(40, Math.round(40 * (1 - Math.exp(-a.nEmbers / 25)))));
+    const expTotal = Math.max(0, Math.min(100, Math.round(a.trail + a.ember - a.clip)));
+    document.getElementById('out').textContent =
+      'A: total=' + a.total + ' trail=' + a.trail + '/40 (n=' + a.nTrails + ')' +
+      ' ember=' + a.ember + '/40 (n=' + a.nEmbers + ')' + ' clip=' + a.clip + '/20' +
+      ' threshold=' + a.threshold + ' ms=' + a.ms + '\n' +
+      'window.__sparklerLab.analysis=' + JSON.stringify(window.__sparklerLab.analysis);
+
+    results.push(report('A: 3 trails detected (got ' + a.nTrails + ')', a.nTrails === 3));
+    results.push(report('A: 21 roundish components = 20 embers + clip patch (got ' + a.nEmbers + ')', a.nEmbers === 21));
+    results.push(report('A: trailScore follows soft curve (' + expTrail + ')', a.trail === expTrail));
+    results.push(report('A: emberScore follows soft curve (' + expEmber + ')', a.ember === expEmber));
+    results.push(report('A: total = trail+ember-clip (' + expTotal + ')', a.total === expTotal));
+    results.push(report('A: window.__sparklerLab.analysis === result', window.__sparklerLab.analysis === a));
+    results.push(report('A: clip penalty > 0 (got ' + a.clip + ')', a.clip > 0));
+    results.push(report('A: analyzed in <300ms (got ' + a.ms + 'ms)', a.ms != null && a.ms < 300));
+
+    // ---- scene B: flash-blown, conditional recommendations fire ----
+    const b = mod.analyzeImage(srcB, { shutter: '1/500', aperture: 'f/8', iso: 100, flashFired: true });
+    if (!b) throw new Error('analyzeImage returned null for scene B');
+    results.push(report('B: flash-blown -> zero trails (got ' + b.nTrails + ')', b.nTrails === 0));
+    results.push(report('B: heavy clip penalty (got ' + b.clip + '/20)', b.clip >= 15));
+    results.push(report('B: total clamped to 0..100 (got ' + b.total + ')', b.total >= 0 && b.total <= 100));
+
+    // ---- event path on scene B: dispatch + verify UI population ----
+    setTimeout(() => {
+      window.__sparklerLab = { source: srcB, exif: { shutter: '1/500', aperture: 'f/8', iso: 100, flashFired: true } };
+      document.dispatchEvent(new Event('sparklerlab:image-loaded'));
+      window.dispatchEvent(new Event('sparklerlab:image-loaded'));
+
+      setTimeout(() => {
+        const score = document.getElementById('scoreNum').textContent;
+        const subT = document.getElementById('subTrail').textContent;
+        const subE = document.getElementById('subEmber').textContent;
+        const subC = document.getElementById('subClip').textContent;
+        const recs = Array.from(document.getElementById('recList').querySelectorAll('li'))
+          .map(li => li.textContent);
+        const recText = recs.join(' | ');
+        results.push(report('UI: scoreNum populated: ' + score, score === String(b.total)));
+        results.push(report('UI: subTrail format: ' + subT, /\/40 - \w+/.test(subT)));
+        results.push(report('UI: subEmber format: ' + subE, /\/40 - \w+/.test(subE)));
+        results.push(report('UI: subClip format: ' + subC, /\/20 - \w+/.test(subC)));
+        results.push(report('UI: >=3 recs + footer (' + recs.length + ' li)', recs.length >= 4));
+        results.push(report('UI: footer line present', recs.some(r => /Heuristic estimate/.test(r))));
+        results.push(report('UI: rear-curtain rec fired', recText.includes('rear-curtain sync')));
+        results.push(report('UI: clip/FEC rec fired', recText.includes('exposure compensation')));
+        results.push(report('UI: shutter rec fired', recText.includes('shutter-drag range')));
+        results.push(report('UI: ISO rec fired', recText.includes('raise ISO')));
+
+        // histogram canvas painted: gold bars + red clip bins + panel bg.
+        // (scene B is blown -> mostly red bars is CORRECT; assert both colors present)
+        const hctx = document.getElementById('histCanvas').getContext('2d');
+        const d = hctx.getImageData(0, 0, 560, 180).data;
+        let gold = 0, red = 0, bg = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g2 = d[i + 1], bl = d[i + 2];
+          if (r > 200 && g2 > 140 && g2 < 220) gold++;
+          else if (r > 200 && g2 < 130) red++;
+          else if (r === 20 && g2 === 24 && bl === 36) bg++;
+        }
+        results.push(report('UI: histogram painted (gold=' + gold + ', red=' + red + ', bg=' + bg + ')',
+          gold > 20 && red > 0 && bg > 1000));
+
+        const pass = results.filter(Boolean).length;
+        const banner = document.createElement('p');
+        banner.textContent = 'SUMMARY: ' + pass + '/' + results.length + ' checks passed';
+        banner.className = pass === results.length ? 'pass' : 'fail';
+        banner.id = 'test-summary';
+        document.body.appendChild(banner);
+      }, 250);
+    }, 200);
+  } catch (err) {
+    document.getElementById('out').textContent = 'FAIL: ' + (err && err.message ? err.message : String(err));
+    report(String(err && err.stack || err), false);
+  }
+</script>
+</body>
+</html>

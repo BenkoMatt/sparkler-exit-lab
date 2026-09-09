@@ -58,7 +58,7 @@ def silhouettes(d, cx, cy, scale=1.0):
         d.line([bx+int(120*s), body_top-int(70*s), bx+int(210*s), body_top-int(150*s)],
                fill=(90, 70, 45), width=int(6*s))
 
-def trails(d, rows=2, length=220, n_per_side=9, ember_r=4, ember_alpha=90):
+def trails(d, rows=2, length=220, n_per_side=9, ember_r=4, ember_alpha=90, trail_alpha=(100, 45)):
     """Two rows of wand tips emitting gold trails toward the vanishing point."""
     cy = int(H * 0.56)
     for side, sign in ((0, -1), (1, 1)):
@@ -67,16 +67,19 @@ def trails(d, rows=2, length=220, n_per_side=9, ember_r=4, ember_alpha=90):
             # perspective: farther rows are higher and smaller
             x_edge = W//2 + sign * (120 + 560 * t)
             y = cy - int(150 * (1 - t)) + int(40 * t)
-            # trail: streak pointing toward couple (vanishing direction)
-            steps = int(length * (1 - 0.55 * t) / 12)
+            # trail: CONTINUOUS bright streak pointing toward couple (vanishing direction)
+            steps = int(length * (1 - 0.55 * t) / 4)
             for s in range(steps):
                 tt = s / steps
                 px = int(x_edge - sign * (30 + 190 * (1-t)) * tt)
                 py = y + int(10 * tt * (1 if sign < 0 else -1)) + int(24 * tt * tt)
-                a = int(ember_alpha * (1 - tt) ** 1.3)
+                a = int(100 - 55 * tt)  # solid core: 100->45 (of 100), stays bright
                 r = max(1, int(5 * (1 - t) * (1 - tt) + 1))
-                col = (min(255, 255*a//100), min(255, int(200*a//100)), int(110*a//100))
+                col = (min(255, 255*a//100), min(255, int(210*a//100)), int(120*a//100))
                 d.ellipse([px-r, py-r, px+r, py+r], fill=col)
+                # hot core pixel line on top
+                if r >= 2:
+                    d.ellipse([px-1, py-1, px+1, py+1], fill=(255, 240, 200))
             # ember at wand tip
             d.ellipse([x_edge-4, y-4, x_edge+4, y+4], fill=(255, 236, 180))
 
@@ -92,7 +95,7 @@ def spark_halo(img, cx, cy, r, strength=1.0):
 def make_tunnel_drag():
     img, d = night_bg(warm=1.0)
     bokeh(d, 26, int(H*0.35), int(H*0.75), 6, 26, alpha=50)
-    trails(d, length=260)
+    trails(d, length=340, n_per_side=10)
     silhouettes(d, W//2, int(H*0.82))
     img = img.filter(ImageFilter.GaussianBlur(0.6))
     # central glow where the couple stands

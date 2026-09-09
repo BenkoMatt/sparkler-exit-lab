@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- THROWAWAY preview harness for heads.js (P2 engine wave). Safe to delete. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>heads.js preview harness</title>
+<style>
+  html, body { margin: 0; background: #0b0d12; }
+  body { color: #e8e6df; font-family: system-ui, sans-serif; }
+  main { display: grid; grid-template-columns: repeat(4, 200px); gap: 12px; padding: 16px; }
+  figure { margin: 0; background: #141824; border: 1px solid #232936; border-radius: 10px; padding: 10px; }
+  canvas.thumb { display: block; background: #0b0d12; border-radius: 10px; }
+  figcaption { font-size: 12px; color: #9aa0ae; margin-top: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <figure><canvas class="thumb" data-head="classic"   width="160" height="160"></canvas><figcaption>classic</figcaption></figure>
+  <figure><canvas class="thumb" data-head="heart"    width="160" height="160"></canvas><figcaption>heart</figcaption></figure>
+  <figure><canvas class="thumb" data-head="star"     width="160" height="160"></canvas><figcaption>star</figcaption></figure>
+  <figure><canvas class="thumb" data-head="initials" data-text="J+M" width="160" height="160"></canvas><figcaption>initials J+M</figcaption></figure>
+  <figure><canvas class="thumb" data-head="initials" width="160" height="160"></canvas><figcaption>initials fallback US</figcaption></figure>
+  <figure><canvas class="thumb" data-head="flame"    width="160" height="160"></canvas><figcaption>flame</figcaption></figure>
+  <figure><canvas class="thumb" data-head="orb"      width="160" height="160"></canvas><figcaption>orb</figcaption></figure>
+  <figure><canvas class="thumb" data-head="upload"   width="160" height="160"></canvas><figcaption>upload (no image)</figcaption></figure>
+</main>
+<script type="module" src="./assets/js/heads.js"></script>
+</body>
+</html>
